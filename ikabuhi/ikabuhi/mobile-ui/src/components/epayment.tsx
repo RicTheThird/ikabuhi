@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -6,6 +6,9 @@ import {
   Button,
   IconButton,
   Paper,
+  Snackbar,
+  Alert,
+  CircularProgress,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
@@ -14,29 +17,87 @@ import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
+import { getMyDetails, postPayment } from "../services/apiService";
+import { Member, SnackbarAlert } from "../services/interfaces";
+
+const defaultFormValues = {
+  savingsPayment: 0,
+  loanPayment: 0,
+  paymentDate: dayjs().format('YYYY-MM-DD'),
+  receiptFile: null
+}
 
 const EPayment = () => {
   const navigate = useNavigate();
-  const [loanAmount, setLoanAmount] = useState("");
-  const [savingsAmount, setSavingsAmount] = useState("");
-  const [date, setDate] = useState<any>(dayjs());
-  const [file, setFile] = useState(null);
+  const [myDetails, setMyDetails] = useState<Member>();
+  const [loading, setLoading] = useState(false); // Loading state
+  const [snackOpen, setSnackOpen] = useState(false);
+  const [alert, setAlert] = useState<SnackbarAlert>();
+  const [formValues, setFormValues] = useState(defaultFormValues);
 
-  const handleLoanAmountChange = (event: any) => {
-    setLoanAmount(event.target.value);
+  useEffect(() => {
+    getMyDetailsAsync()
+  }, []);
+
+  const getMyDetailsAsync = async () => {
+    const response = await getMyDetails();
+    setMyDetails(response)
+  }
+
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormValues({
+      ...formValues,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  const handleSavingsAmountChange = (event: any) => {
-    setSavingsAmount(event.target.value);
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    if (e.target.files) {
+      setFormValues({
+        ...formValues,
+        [e.target.name]: e.target.files[0]
+      })
+    }
+  }
+
+  const handleDateChange = (date: any) => {
+    setFormValues({
+      ...formValues,
+      paymentDate: date,
+    });
   };
 
-  const handleDateChange = (newDate: any) => {
-    setDate(newDate);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true)
+    try {
+      formValues.paymentDate = dayjs(formValues.paymentDate).format('YYYY-MM-DD')
+      const response: any = await postPayment(formValues)
+      if (response.status === 202) {
+        setAlert({ success: true, message: "Payment successfully submitted!" })
+        setFormValues(defaultFormValues)
+        getMyDetailsAsync()
+      } else {
+        setAlert({ success: false, message: response.response.data })
+      }
+    } catch (error) {
+      console.log(error)
+      setAlert({ success: false, message: "Payment failed. Please try again later." })
+    } finally {
+      setSnackOpen(true)
+      setLoading(false)
+    }
   };
 
-  const handleFileChange = (event: any) => {
-    setFile(event.target.files[0]);
-  };
+  const disableNonPaymentDates = (date: any) => {
+    const paidDates = myDetails?.payments.map(m => dayjs(m.paymentDate).format('YYYY-MM-DD'))
+    if (paidDates) {
+      return paidDates.includes(dayjs(date).format('YYYY-MM-DD')) || dayjs(date).get('day') !== myDetails?.group?.meetingDay
+    } else {
+      return dayjs(date).get('day') !== myDetails?.group?.meetingDay
+    }
+  }
 
   return (
     <Box
@@ -71,37 +132,37 @@ const EPayment = () => {
       </Box>
 
       {/* Account Information Section */}
-      <Paper elevation={3} sx={{ width: "100%", padding: 2, mb: 3 }}>
+      <Paper elevation={3} sx={{ width: "-webkit-fill-available", padding: 2, mb: 3 }}>
         <Typography variant="body1" fontWeight="bold">
           Account No.:{" "}
           <Typography variant="body1" component="span">
-            HG128492613
+            {myDetails?.accountNo}
           </Typography>
         </Typography>
         <Typography variant="body1" fontWeight="bold">
           Account Name:{" "}
           <Typography variant="body1" component="span">
-            Dela Cruz, Juana
+            {myDetails?.lastName}, {myDetails?.firstName}
           </Typography>
         </Typography>
         <Typography variant="body1" fontWeight="bold">
           Address:{" "}
           <Typography variant="body1" component="span">
-            Boot Tanauan City
+            {myDetails?.brgy}, {myDetails?.municipality} City
           </Typography>
         </Typography>
         <Typography variant="body1" fontWeight="bold">
           Current Loan Balance:{" "}
           <Typography variant="body1" component="span">
-            17,200.00
+            ₱{myDetails?.memberLoans.find((m: any) => m.isActive === true)?.loanBalance.toFixed(2) ?? 0.00}
           </Typography>
         </Typography>
-        <Typography variant="body1" fontWeight="bold">
+        {/* <Typography variant="body1" fontWeight="bold">
           Collector's Name:{" "}
           <Typography variant="body1" component="span">
             Junard Cy
           </Typography>
-        </Typography>
+        </Typography> */}
         <Typography variant="body1" fontWeight="bold">
           Branch:{" "}
           <Typography variant="body1" component="span">
@@ -110,66 +171,97 @@ const EPayment = () => {
         </Typography>
       </Paper>
 
-      {/* Payment Form Section */}
-      <TextField
-        label="Amount to Pay in Loan"
-        variant="outlined"
-        fullWidth
-        value={loanAmount}
-        onChange={handleLoanAmountChange}
-      />
-      <Box sx={{ width: "100%", marginBottom: 2 }}>
-        <Typography variant="caption">Weekly Payment: 1,000.00</Typography>
-      </Box>
+      <form onSubmit={handleSubmit}>
+        {/* Payment Form Section */}
+        <TextField
+          label="Amount to Pay in Loan"
+          variant="outlined"
+          fullWidth
+          name="loanPayment"
+          type="number"
+          value={formValues.loanPayment}
+          onChange={handleInputChange}
+        />
+        <Box sx={{ width: "100%", marginBottom: 2 }}>
+          <Typography variant="caption">Weekly Payment: ₱{myDetails?.memberLoans?.find((m: any) => m.isActive === true)?.weeklyPayment.toFixed(2) ?? 0.00}</Typography>
+        </Box>
 
-      <TextField
-        label="Amount to Pay in Savings"
-        variant="outlined"
-        fullWidth
-        value={savingsAmount}
-        onChange={handleSavingsAmountChange}
-      />
-      <Box sx={{ width: "100%", marginBottom: 2 }}>
-        <Typography variant="caption">Minimum Savings: 50.00</Typography>
-      </Box>
-      <Box sx={{ width: "100%", marginBottom: 2 }}>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
-            label="Date"
-            value={date}
-            onChange={handleDateChange}
-            slots={{
-              textField: (textFieldProps) => (
-                <TextField fullWidth required {...textFieldProps} />
-              ),
-            }}
-          />
-        </LocalizationProvider>
-      </Box>
+        <TextField
+          label="Amount to Pay in Savings"
+          variant="outlined"
+          fullWidth
+          name="savingsPayment"
+          value={formValues.savingsPayment}
+          onChange={handleInputChange}
+        />
+        <Box sx={{ width: "100%", marginBottom: 2 }}>
+          <Typography variant="caption">Minimum Savings: ₱50.00</Typography>
+        </Box>
+        <Box sx={{ width: "100%", marginBottom: 2 }}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Date"
+              value={dayjs(formValues.paymentDate)}
+              minDate={dayjs()}
+              onChange={handleDateChange}
+              shouldDisableDate={disableNonPaymentDates}
+              slots={{
+                textField: (textFieldProps) => (
+                  <TextField fullWidth required {...textFieldProps} />
+                ),
+              }}
+            />
+          </LocalizationProvider>
+        </Box>
 
-      {/* Upload Section */}
-      <Typography variant="body2" sx={{ mb: 2 }}>
-        Upload the e-receipt below for proof of payment
-      </Typography>
-      <Button
-        variant="outlined"
-        component="label"
-        fullWidth
-        startIcon={<UploadFileIcon />}
-        sx={{ mb: 3 }}
+        {/* Upload Section */}
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          Upload the e-receipt below for proof of payment
+        </Typography>
+        {!formValues.receiptFile && (
+          <Typography variant='button' color='#d32f2f' sx={{ marginLeft: 1 }}>
+            No file uploaded
+          </Typography>
+        )}
+        {formValues.receiptFile && (
+          <Typography variant='button' sx={{ marginLeft: 1 }}>
+            Attached: <strong>{formValues.receiptFile['name']}</strong>
+          </Typography>
+        )}
+        <Button
+          variant="outlined"
+          component="label"
+          fullWidth
+          startIcon={<UploadFileIcon />}
+          sx={{ mb: 3 }}
+        >
+          Upload image/file
+          <input type="file" name="receiptFile" hidden onChange={handleFileSelected} />
+        </Button>
+
+        <br />
+        {/* Proceed Button */}
+        <Button
+          variant="contained"
+          fullWidth
+          type="submit"
+          sx={{ backgroundColor: "#ff8c00", color: "#fff" }}
+          disabled={loading}
+          startIcon={loading ? <CircularProgress size={20} /> : null}
+        >
+          Proceed Payment
+        </Button>
+      </form>
+      <Snackbar
+        open={snackOpen}
+        autoHideDuration={10000}
+        onClose={() => setSnackOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        Upload image/file
-        <input type="file" hidden onChange={handleFileChange} />
-      </Button>
-
-      {/* Proceed Button */}
-      <Button
-        variant="contained"
-        fullWidth
-        sx={{ backgroundColor: "#ff8c00", color: "#fff" }}
-      >
-        Proceed
-      </Button>
+        <Alert onClose={() => setSnackOpen(false)} severity={alert?.success ? "success" : "error"} sx={{ width: '100%' }}>
+          {alert?.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

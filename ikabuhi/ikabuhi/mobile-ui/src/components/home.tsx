@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Typography, Grid, IconButton, Paper } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import NotificationsIcon from "@mui/icons-material/Notifications";
@@ -12,9 +12,45 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
 import { useNavigate } from "react-router-dom";
+import { getMyDetails } from "../services/apiService";
+import dayjs from "dayjs";
+import { Member } from "../services/interfaces";
+import { ExitToApp } from "@mui/icons-material";
+import { logout } from "../services/authService";
 
 const Home = () => {
   const navigate = useNavigate();
+  const [myDetails, setMyDetails] = useState<Member>();
+  const [recentTransaction, setRecentTransaction] = useState<any>(null);
+
+  useEffect(() => {
+    getMyDetailsAsync()
+  }, []);
+
+  const getMyDetailsAsync = async () => {
+    const response = await getMyDetails();
+    if (response?.transactions && response?.transactions?.length > 0) {
+      var recentT = response?.transactions.reduce((latest: any, current: any) => {
+        const latestDate = new Date(latest.transactionDate);
+        const currentDate = new Date(current.transactionDate);
+        return currentDate > latestDate ? current : latest;
+      });
+      setRecentTransaction(recentT);
+    }
+
+    setMyDetails(response)
+  }
+
+  const getTimeOfDay = (): string => {
+    const currentHr = dayjs().hour();
+    if (currentHr >= 4 && currentHr < 12)
+      return "morning"
+    else if (currentHr >= 12 && currentHr < 17)
+      return "afternoon"
+    else
+      return "evening"
+  }
+
   return (
     <Box
       sx={{
@@ -36,24 +72,24 @@ const Home = () => {
           mb: 2,
         }}
       >
-        <IconButton>
+        {/* <IconButton>
           <ArrowBackIcon sx={{ color: "#ff8c00" }} />
-        </IconButton>
-        <Box>
+        </IconButton> */}
+        <Box textAlign={"right"} sx={{ width: '100%' }}>
           <IconButton>
             <NotificationsIcon sx={{ color: "#002855" }} />
           </IconButton>
           <IconButton>
-            <ChatBubbleIcon sx={{ color: "#002855" }} />
-          </IconButton>
-          <IconButton>
             <AccountCircleIcon sx={{ color: "#002855" }} />
+          </IconButton>
+          <IconButton onClick={() => logout()}>
+            <ExitToApp sx={{ color: "#002855" }} />
           </IconButton>
         </Box>
       </Box>
-      <Box sx={{ width: "100%", textAlign: "left" }}>
-        <Typography variant="h5" fontWeight="bold" textAlign="left">
-          Hi Marites!
+      <Box sx={{ width: "100%", textAlign: "center" }}>
+        <Typography variant="h5" fontWeight="bold" textAlign="center">
+          Good {getTimeOfDay()}, {myDetails?.firstName ?? ""}
         </Typography>
       </Box>
 
@@ -71,7 +107,7 @@ const Home = () => {
         <Box sx={{ padding: "10px" }}>
           <Typography variant="h6">Your Loan Balance</Typography>
           <Typography variant="h5" fontWeight="bold">
-            ₱ 19,500.00
+            ₱ {myDetails?.memberLoans.find((m: any) => m.isActive === true)?.loanBalance.toFixed(2) ?? 0.00}
           </Typography>
         </Box>
       </Box>
@@ -86,13 +122,15 @@ const Home = () => {
           color: "#fff",
         }}
       >
-        <Box sx={{ padding: "10px" }}>
-          <Typography variant="body2">Recent Transaction</Typography>
-          <Typography variant="body2">
-            Hi MARITES! U1750516, PHP 1,750.00 is paid to your loan in CASH on
-            03/14/2024. Your Loan Balance in LifeBank is 5,250.00. Thank you.
-          </Typography>
-        </Box>
+        {myDetails?.payments && myDetails?.payments?.length > 0 &&
+          <Box sx={{ padding: "10px" }}>
+            <Typography variant="body2">Recent Transaction</Typography>
+            <Typography variant="body2">
+              PHP {myDetails?.payments[0]?.loanPayment?.toFixed(2) ?? 0} is paid to your loan and PHP {myDetails?.payments[0]?.savingsPayment?.toFixed(2) ?? 0} is paid to your savings on {" "}
+              {dayjs(myDetails?.payments[0]?.paymentDate).format('YYYY-MM-DD')}. Thank you!
+            </Typography>
+          </Box>
+        }
       </Box>
 
       {/* Options Grid */}
@@ -203,6 +241,7 @@ const Home = () => {
               justifyContent: "center",
               height: 90,
             }}
+            onClick={() => navigate('/loan-select')}
           >
             <AssignmentIcon sx={{ fontSize: 40, color: "#ff8c00" }} />
             <Typography variant="button" display="block" mt={1}>

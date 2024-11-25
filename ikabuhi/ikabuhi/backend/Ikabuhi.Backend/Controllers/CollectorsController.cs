@@ -7,12 +7,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ikabuhi.Backend;
 using Ikabuhi.Backend.Models;
+using Ikabuhi.Backend.Extensions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Ikabuhi.Backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CollectorsController : ControllerBase
+    public class CollectorsController : BaseController
     {
         private readonly ApplicationDbContext _context;
 
@@ -28,6 +30,13 @@ namespace Ikabuhi.Backend.Controllers
             return await _context.Collectors.ToListAsync();
         }
 
+        [Authorize]
+        [HttpGet("my")]
+        public async Task<ActionResult<IEnumerable<Collector>>> GetMyCollectors()
+        {
+            return await _context.Collectors.Where(c => c.Id == GetUserId()).Include(c => c.CollectorGroups).ToListAsync();
+        }
+
         // GET: api/Collectors/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Collector>> GetCollector(Guid id)
@@ -40,6 +49,25 @@ namespace Ikabuhi.Backend.Controllers
             }
 
             return collector;
+        }
+
+        [Authorize]
+        [HttpGet("group/{id}")]
+        public async Task<ActionResult<Collector>> GetCollectorByGroup(Guid id)
+        {
+            var collector = await _context.CollectorGroups.Where(c => c.GroupId == id).Include(c => c.Collector).Select(c => new Collector
+            {
+                FirstName = c.Collector.FirstName,
+                LastName = c.Collector.LastName,
+                Id = c.CollectorId,
+            }).ToListAsync();
+
+            if (collector == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(collector);
         }
 
         // PUT: api/Collectors/5
@@ -75,13 +103,50 @@ namespace Ikabuhi.Backend.Controllers
 
         // POST: api/Collectors
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Collector>> PostCollector(Collector collector)
+        [HttpPost("register")]
+        public async Task<ActionResult<Collector>> PostCollector(CollectorDto collectorDto)
         {
-            _context.Collectors.Add(collector);
-            await _context.SaveChangesAsync();
+            if (collectorDto == null) return BadRequest();
 
-            return CreatedAtAction("GetCollector", new { id = collector.Id }, collector);
+            var exists = await _context.Collectors.SingleOrDefaultAsync(x => x.UserName == collectorDto.UserName);
+            if (exists != null) return BadRequest("Username exists");
+
+            var collectorId = Guid.NewGuid();
+            var collector = new Collector
+            {
+                Id = collectorId,
+                UserName = collectorDto.UserName,
+                LastName = collectorDto.LastName,
+                FirstName = collectorDto.FirstName,
+                MiddleName = collectorDto.MiddleName,
+                Address = collectorDto.Address,
+                ContactNo = collectorDto.ContactNo,
+                Branch = collectorDto.Branch,
+                PasswordHash = collectorDto.PasswordRaw.Hash(),
+                CreatedAt = DateTime.UtcNow.ToSEATimeFromUtc(),
+                IsActive = true
+            };
+
+            await _context.Collectors.AddAsync(collector);
+
+            var collectorGroups = new List<CollectorGroup>();
+
+            foreach (var groupId in collectorDto.GroupIds)
+            {
+                var group = new CollectorGroup
+                {
+                    Id = Guid.NewGuid(),
+                    CollectorId = collectorId,
+                    GroupId = groupId,
+                    IsActive = true,
+                };
+
+                collectorGroups.Add(group);
+            }
+
+            await _context.CollectorGroups.AddRangeAsync(collectorGroups);
+            await _context.SaveChangesAsync();
+            return Ok(collector);
         }
 
         // DELETE: api/Collectors/5
@@ -104,5 +169,18 @@ namespace Ikabuhi.Backend.Controllers
         {
             return _context.Collectors.Any(e => e.Id == id);
         }
+    }
+
+    public class CollectorDto
+    {
+        public string LastName { get; set; }
+        public string FirstName { get; set; }
+        public string? MiddleName { get; set; }
+        public string Address { get; set; }
+        public string ContactNo { get; set; }
+        public string Branch { get; set; } = "Tanauan";
+        public string UserName { get; set; }
+        public string PasswordRaw { get; set; }
+        public List<Guid> GroupIds { get; set; }
     }
 }

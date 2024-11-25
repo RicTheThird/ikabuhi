@@ -1,4 +1,6 @@
-﻿namespace Ikabuhi.Backend.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Ikabuhi.Backend.Models
 {
     public class CollectorGroup
     {
@@ -6,7 +8,11 @@
         public Guid CollectorId { get; set; }
         public Guid GroupId { get; set; }
         public bool IsActive { get; set; }
-        public Collector Collector { get; set; }
-        public Group Group { get; set; }
+
+        [ForeignKey("CollectorId")]
+        public virtual Collector? Collector { get; set; }
+
+        [ForeignKey("GroupId")]
+        public virtual Group? Group { get; set; }
     }
 }

@@ -17,7 +17,8 @@ namespace Ikabuhi.Backend
         public DbSet<CollectorGroup> CollectorGroups { get; set; }
         public DbSet<MemberSaving> MemberSavings { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
-        public DbSet<MemberWithdrawal> MemberWithdrawals { get; set; }
+        public DbSet<MemberWithdrawal> MemberWithdrawal { get; set; }
+        public DbSet<Payments> Payments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

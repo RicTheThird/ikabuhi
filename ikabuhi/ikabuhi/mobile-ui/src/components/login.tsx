@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Button, Checkbox, FormControlLabel, Link, Paper, IconButton, InputAdornment } from '@mui/material';
+import { Box, Typography, TextField, Button, Checkbox, FormControlLabel, Link, Paper, IconButton, InputAdornment, CircularProgress } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { useNavigate } from 'react-router-dom';
+import { login } from '../services/authService';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -10,13 +11,19 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [loading, setLoading] = useState(false); // Loading state
 
-  const handleUsernameChange = (event : any) => {
-    setUsername(event.target.value);
-  };
+  const [formValues, setFormValues] = useState({
+    username: "",
+    password: "",
+  });
 
-  const handlePasswordChange = (event: any) => {
-    setPassword(event.target.value);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormValues({
+      ...formValues,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleRememberMeChange = (event: any) => {
@@ -27,12 +34,22 @@ const Login = () => {
     setShowPassword((prev) => !prev);
   };
 
-  const handleLogin = () => {
-    // Handle login logic here
-    console.log('Username:', username);
-    console.log('Password:', password);
-    console.log('Remember Me:', rememberMe);
-    navigate('/home');
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true)
+    try {
+      const response: any = await login(formValues)
+      if (response.status === 200) {
+        setLoginError('')
+        navigate('/home');
+      } else {
+        setLoginError("Invalid User name or password")
+      }
+    } catch (error) {
+      setLoginError("Invalid User name or password")
+    } finally {
+      setLoading(false)
+    }
   };
 
   return (
@@ -69,14 +86,23 @@ const Login = () => {
         >
           Log In
         </Typography>
-
+        {loginError &&
+          <>
+            <br />
+            <Typography variant="body2" color="error" sx={{
+              textAlign: 'center'
+            }}>
+              {loginError}
+            </Typography></>
+        }
         <Box mt={2}>
           <TextField
             fullWidth
             label="Username"
             variant="outlined"
-            value={username}
-            onChange={handleUsernameChange}
+            value={formValues.username}
+            name="username"
+            onChange={handleInputChange}
             sx={{ marginBottom: 2, backgroundColor: '#fff' }}
           />
           <TextField
@@ -84,8 +110,9 @@ const Login = () => {
             label="Password"
             variant="outlined"
             type={showPassword ? 'text' : 'password'}
-            value={password}
-            onChange={handlePasswordChange}
+            value={formValues.password}
+            name='password'
+            onChange={handleInputChange}
             sx={{ marginBottom: 2, backgroundColor: '#fff' }}
             InputProps={{
               endAdornment: (
@@ -115,6 +142,8 @@ const Login = () => {
             fullWidth
             variant="contained"
             sx={{ backgroundColor: '#ff8c00', color: '#fff', paddingY: 1.2, fontWeight: 'bold' }}
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={20} /> : null}
             onClick={handleLogin}
           >
             Log In

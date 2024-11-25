@@ -7,12 +7,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ikabuhi.Backend;
 using Ikabuhi.Backend.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Ikabuhi.Backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ProductLoansController : ControllerBase
+    public class ProductLoansController : BaseController
     {
         private readonly ApplicationDbContext _context;
 
@@ -22,6 +23,7 @@ namespace Ikabuhi.Backend.Controllers
         }
 
         // GET: api/ProductLoans
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProductLoan>>> GetProductLoans()
         {
@@ -29,6 +31,7 @@ namespace Ikabuhi.Backend.Controllers
         }
 
         // GET: api/ProductLoans/5
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<ProductLoan>> GetProductLoan(Guid id)
         {
@@ -75,6 +78,7 @@ namespace Ikabuhi.Backend.Controllers
 
         // POST: api/ProductLoans
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<ProductLoan>> PostProductLoan(ProductLoan productLoan)
         {

@@ -2,3 +2,7 @@
 *.props
 ikabuhi/ikabuhi/backend/Ikabuhi.Backend/obj
 ikabuhi/ikabuhi/backend/Ikabuhi.Backend/.vs
+ikabuhi/ikabuhi/backend/Ikabuhi.Backend/UploadedFiles
+ikabuhi/ikabuhi/collector-ui/build
+ikabuhi/.vscode
+ikabuhi.code-workspace

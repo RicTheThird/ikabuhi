@@ -22,9 +22,9 @@ const App: React.FC = () => {
         <Route path="/home" element={<HomePage />}>
           <Route path="" element={<MembersGroups />} />
           <Route path="groups" element={<MembersGroups />} />
-          <Route path="members" element={<MembersList />} />
-          <Route path="registration" element={<MemberRegistration />} />
-          <Route path="transactions" element={<MemberTransactions />} />
+          <Route path="members/:groupId" element={<MembersList />} />
+          <Route path="registration/:groupId" element={<MemberRegistration />} />
+          <Route path="transactions/:groupId" element={<MemberTransactions />} />
           <Route path="transactions-report" element={<MemberTransactionsReport />} />
           <Route path="ecash" element={<MemberECashPayment />} />
           <Route path="savings-credit" element={<MemberSavingsCreditScore />} />

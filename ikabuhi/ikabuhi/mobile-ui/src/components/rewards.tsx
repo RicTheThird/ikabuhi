@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 interface Reward {
   name: string;
@@ -18,19 +18,21 @@ interface Reward {
   isUnlocked: boolean;
 }
 
-const rewards: Reward[] = [
-  { name: "Small Business Loan", points: 200, isUnlocked: true },
-  { name: "Wash Loan", points: 300, isUnlocked: true },
-  { name: "Microinsurance", points: 150, isUnlocked: false },
-  { name: "Loan Insurance", points: 230, isUnlocked: true },
-  { name: "Business Development Program", points: 210, isUnlocked: false },
-  { name: "Educational Scholarship Program", points: 480, isUnlocked: false },
-  { name: "Health", points: 190, isUnlocked: false },
-];
 
 const CreditRewards: React.FC = () => {
   const navigate = useNavigate();
-  const currentPoints = 350;
+  const { points } = useParams();
+
+  const rewards: Reward[] = [
+    { name: "Small Business Loan", points: 200, isUnlocked: Number(points) >= 200 },
+    { name: "Wash Loan", points: 300, isUnlocked: Number(points) >= 300 },
+    { name: "Microinsurance", points: 150, isUnlocked: false },
+    { name: "Loan Insurance", points: 230, isUnlocked: false },
+    { name: "Business Development Program", points: 210, isUnlocked: false },
+    { name: "Educational Scholarship Program", points: 480, isUnlocked: false },
+    { name: "Health", points: 190, isUnlocked: false },
+  ];
+
 
   return (
     <Box
@@ -71,7 +73,7 @@ const CreditRewards: React.FC = () => {
           >
             <Typography variant="body2">Current Points:</Typography>
             <Typography variant="body1" sx={{ ml: 1 }}>
-              {currentPoints}
+              {points}
             </Typography>
           </Box>
         </Box>
@@ -118,9 +120,8 @@ const CreditRewards: React.FC = () => {
           fullWidth
           sx={{
             mt: 3,
-            backgroundColor: "#f0a06d",
+            backgroundColor: "#ff8c00", color: "#fff",
             fontWeight: "bold",
-            "&:hover": { backgroundColor: "#d88c5a" },
           }}
           onClick={() => navigate("/credit-score")}
         >

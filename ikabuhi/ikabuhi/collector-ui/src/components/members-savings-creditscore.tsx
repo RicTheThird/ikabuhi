@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -8,74 +8,57 @@ import {
   CardContent,
   Grid,
 } from "@mui/material";
+import { getAllGroupMembers, getGroupById, getGroupMembers, getMyGroups } from "../services/apiService";
+import { Groups, Member } from "../services/interfaces";
 
-const dataOptions: any = {
-  Savings: [
-    {
-      name: "Helena Magpantay",
-      clientNo: "U12127836",
-      loanAmount: 10000,
-      currentSavings: 2500,
-      savingsToWithdraw: 500,
-    },
-    {
-      name: "Helena Magpantay",
-      clientNo: "U12127836",
-      loanAmount: 15000,
-      currentSavings: 2500,
-      savingsToWithdraw: 0,
-    },
-    {
-      name: "Helena Magpantay",
-      clientNo: "U12127836",
-      loanAmount: 20000,
-      currentSavings: 5500,
-      savingsToWithdraw: 1500,
-    },
-  ],
-  CreditScore: [
-    {
-      name: "Helena Magpantay",
-      clientNo: "U12127836",
-      creditScore: 250,
-    },
-    {
-      name: "Helena Magpantay",
-      clientNo: "U12127836",
-      creditScore: 250,
-    },
-    {
-      name: "Helena Magpantay",
-      clientNo: "U12127836",
-      creditScore: 250,
-    },
-    {
-      name: "Helena Magpantay",
-      clientNo: "U12127836",
-      creditScore: 250,
-    },
-  ],
-};
 
 const MemberSavingsCreditScore = () => {
   const [transactionType, setTransactionType] = useState<string>("Savings");
-  const data = dataOptions[transactionType];
+  const [groups, setGroups] = useState<Groups[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  //const data = dataOptions[transactionType];
+
+  const getMyCollectorGroups = async () => {
+    const response = await getMyGroups();
+    setGroups(response)
+  }
+
+  useEffect(() => {
+    getMyCollectorGroups();
+    getAllGroupMembersAsync();
+  }, []);
+
+  const getAllGroupMembersAsync = async () => {
+    const response = await getAllGroupMembers();
+    setMembers(response)
+  }
+
+
+
+  const handleGroupChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const response = await getGroupMembers(e.target.value || "");
+    setMembers(response)
+  }
 
   return (
     <Box sx={{ padding: 4, backgroundColor: "#f8f4f4", minHeight: "100vh" }}>
-      <Box mb={4}>
+      {/* <Box mb={4}>
         <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
           GOOD GIRLS: 35 Members
         </Typography>
-      </Box>
+      </Box> */}
       <Box display="flex" justifyContent="space-between" mb={2}>
         <TextField
           label="Group"
           variant="outlined"
           select
           sx={{ width: "20%" }}
+          onChange={handleGroupChange}
         >
-          <MenuItem value="Good Girls">Good Girls</MenuItem>
+          {/* <MenuItem key={999999} value={""} selected>Select Group</MenuItem> */}
+          {groups && groups.map((group: Groups, index: number) => (
+            <MenuItem key={index} value={group.id}>{group.name} ({group.memberCount} Members)</MenuItem>
+          ))}
         </TextField>
         <TextField
           label="Transaction Options"
@@ -85,13 +68,14 @@ const MemberSavingsCreditScore = () => {
           value={transactionType}
           onChange={(e) => setTransactionType(e.target.value)}
         >
+
           <MenuItem value="Savings">Savings</MenuItem>
           <MenuItem value="CreditScore">Credit Score</MenuItem>
         </TextField>
       </Box>
       <Grid container spacing={3}>
         {transactionType === "Savings" &&
-          data.map((item: any, index: number) => (
+          members.length > 0 && members.map((item: Member, index: number) => (
             <Grid item key={index} xs={12} md={4} lg={3}>
               <Card variant="outlined" sx={{ padding: 2 }}>
                 <CardContent>
@@ -112,17 +96,17 @@ const MemberSavingsCreditScore = () => {
                         marginRight: '20px'
                       }}
                     >
-                      {item.name
+                      {(`${item.firstName} ${item.lastName}`)
                         .split(" ")
                         .map((n: string) => n[0])
                         .join("")}
                     </Box>
                     <Box>
                       <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                        {item.name}
+                        {item.firstName} {item.lastName}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {item.clientNo}
+                        {item.accountNo}
                       </Typography>
                     </Box>
                   </Box>
@@ -135,29 +119,30 @@ const MemberSavingsCreditScore = () => {
                         Loan Amount
                       </Typography>
                       <Typography variant="body1">
-                        ₱{item.loanAmount.toFixed(2)}
+                      <strong>₱{item.memberLoans && item.memberLoans.length > 0 ? item.memberLoans[0].totalLoanAmount.toFixed(2) : 0.00}</strong>
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography
                         variant="subtitle2"
-                        sx={{ fontWeight: "bold" }}
+                        sx={{ fontWeight: "bold", color: "#ff8c00" }}
                       >
                         Current Savings
                       </Typography>
                       <Typography variant="body1">
-                        ₱{item.currentSavings.toFixed(2)}
+                        <strong>₱{item.memberSavings && item.memberSavings.length > 0 ? item.memberSavings[0].runningSavingsAmount.toFixed(2) : 0.00}</strong>
                       </Typography>
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid item xs={12}>
                       <Typography
-                        variant="subtitle2"
+                        variant="caption"
                         sx={{ fontWeight: "bold" }}
                       >
-                        Savings to Withdraw
+                        Savings applicable to Withdraw (80% of Current Savings)
                       </Typography>
+                      <br />
                       <Typography variant="body1">
-                        ₱{item.savingsToWithdraw.toFixed(2)}
+                        <strong>₱{item.memberSavings && item.memberSavings.length > 0 ? (item.memberSavings[0].runningSavingsAmount * 0.8).toFixed(2) : 0.00}</strong>
                       </Typography>
                     </Grid>
                   </Grid>
@@ -166,34 +151,44 @@ const MemberSavingsCreditScore = () => {
             </Grid>
           ))}
         {transactionType === "CreditScore" &&
-          data.map((item: any, index: number) => (
+          members.length > 0 && members.map((item: Member, index: number) => (
             <Grid item key={index} xs={12} md={6} lg={3}>
               <Card variant="outlined" sx={{ padding: 2, textAlign: "center" }}>
                 <CardContent>
-                  <Box
-                    component="img"
-                    src="/avatar-placeholder.png"
-                    alt="Profile"
-                    sx={{
-                      width: 64,
-                      height: 64,
-                      borderRadius: "50%",
-                      marginBottom: 2,
-                    }}
-                  />
+                  {/* <Box
+                      sx={{
+                        width: 64,
+                        height: 64,
+                        borderRadius: "50%",
+                        bgcolor: "#ff8c00",
+                        color: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: "bold",
+                        fontSize: 24,
+                        marginBottom: 2,
+                        marginRight: '20px'
+                      }}
+                    >
+                      {(`${item.firstName} ${item.lastName}`)
+                        .split(" ")
+                        .map((n: string) => n[0])
+                        .join("")}
+                    </Box> */}
                   <Typography
                     variant="h6"
                     sx={{ fontWeight: "bold" }}
                     gutterBottom
                   >
-                    {item.name}
+                    {item.firstName} {item.lastName}
                   </Typography>
                   <Typography
                     variant="body2"
                     color="text.secondary"
                     gutterBottom
                   >
-                    {item.clientNo}
+                    {item.accountNo}
                   </Typography>
                   <Box mt={2} mb={2}>
                     <Typography
@@ -201,7 +196,7 @@ const MemberSavingsCreditScore = () => {
                       sx={{ fontWeight: "bold" }}
                       gutterBottom
                     >
-                      {item.creditScore}
+                      {item.payments.length && item.payments.reduce((acc, curr) => acc + curr.creditPointsGained, 0)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Current Credit Score

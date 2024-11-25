@@ -1,4 +1,6 @@
-﻿namespace Ikabuhi.Backend.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Ikabuhi.Backend.Models
 {
     public class MemberSaving
     {
@@ -7,7 +9,10 @@
         public decimal RunningSavingsAmount { get; set; }
         public DateTime LastPaymentDate { get; set; }
         public decimal LastPaidAmount { get; set; }
-        public Member Member { get; set; }
-        public ICollection<Transaction> Transactions { get; set; }
+
+        [ForeignKey("MemberId")]
+        public virtual Member? Member { get; set; }
+
+        public ICollection<Transaction>? Transactions { get; set; }
     }
 }

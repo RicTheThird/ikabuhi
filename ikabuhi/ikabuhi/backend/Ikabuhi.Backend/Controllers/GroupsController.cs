@@ -7,12 +7,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ikabuhi.Backend;
 using Ikabuhi.Backend.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Ikabuhi.Backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class GroupsController : ControllerBase
+    public class GroupsController : BaseController
     {
         private readonly ApplicationDbContext _context;
 
@@ -25,7 +26,7 @@ namespace Ikabuhi.Backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Group>>> GetGroups()
         {
-            return await _context.Groups.ToListAsync();
+            return await _context.Groups.Include(g => g.Members).ToListAsync();
         }
 
         // GET: api/Groups/5
@@ -75,13 +76,39 @@ namespace Ikabuhi.Backend.Controllers
 
         // POST: api/Groups
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [Authorize]
         [HttpPost]
-        public async Task<ActionResult<Group>> PostGroup(Group @group)
+        public async Task<ActionResult<Group>> PostGroup(GroupDto groupDto)
         {
-            _context.Groups.Add(@group);
+            var exists = await _context.Groups.SingleOrDefaultAsync(g => g.Name == groupDto.Name);
+            if (exists != null) return BadRequest("Group name already exist.");
+
+            var groupId = Guid.NewGuid();
+            var group = new Group
+            {
+                Id = groupId,
+                Name = groupDto.Name,
+                Brgy = groupDto.Brgy,
+                MeetingDay = groupDto.MeetingDay,
+                MeetingTime = groupDto.MeetingTime,
+                Municipality = groupDto?.Municipality
+            };
+
+            _context.Groups.Add(group);
+
+            var collectorGroup = new CollectorGroup
+            {
+                Id = Guid.NewGuid(),
+                CollectorId = GetUserId(),
+                GroupId = groupId,
+                IsActive = true
+            };
+
+            _context.CollectorGroups.Add(collectorGroup);
+
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetGroup", new { id = @group.Id }, @group);
+            return group;
         }
 
         // DELETE: api/Groups/5
@@ -104,5 +131,14 @@ namespace Ikabuhi.Backend.Controllers
         {
             return _context.Groups.Any(e => e.Id == id);
         }
+    }
+
+    public class GroupDto
+    {
+        public string Name { get; set; }
+        public string Brgy { get; set; }
+        public string? Municipality { get; set; } = "Tanauan";
+        public int MeetingDay { get; set; } // 0=Sunday, 1=Monday, etc.
+        public string MeetingTime { get; set; }
     }
 }

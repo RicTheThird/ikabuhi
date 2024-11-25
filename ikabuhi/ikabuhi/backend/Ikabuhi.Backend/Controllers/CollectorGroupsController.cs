@@ -1,18 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using Ardalis.Result;
+using Ikabuhi.Backend.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Ikabuhi.Backend;
-using Ikabuhi.Backend.Models;
 
 namespace Ikabuhi.Backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CollectorGroupsController : ControllerBase
+    public class CollectorGroupsController : BaseController
     {
         private readonly ApplicationDbContext _context;
 
@@ -28,22 +24,61 @@ namespace Ikabuhi.Backend.Controllers
             return await _context.CollectorGroups.ToListAsync();
         }
 
-        // GET: api/CollectorGroups/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<CollectorGroup>> GetCollectorGroup(Guid id)
+        [Authorize]
+        [HttpGet("my")]
+        public async Task<ActionResult<IEnumerable<CollectGroupsResponse>>> GetMyCollectorGroups()
         {
-            var collectorGroup = await _context.CollectorGroups.FindAsync(id);
+            var response = new List<CollectGroupsResponse>();
+            var result = await _context.CollectorGroups.Where(c => c.CollectorId == GetUserId()).Include(c => c.Group)
+                .ThenInclude(c => c.Members).ToListAsync();
+            foreach (var item in result)
+            {
+                var temp = new CollectGroupsResponse
+                {
+                    Id = item.GroupId,
+                    Brgy = item?.Group.Brgy,
+                    MeetingDay = item.Group.MeetingDay,
+                    MeetingTime = item.Group.MeetingTime,
+                    MemberCount = item.Group.Members.Count(),
+                    Municipality = item.Group.Municipality,
+                    Name = item.Group.Name
+                };
+                response.Add(temp);
+            }
 
-            if (collectorGroup == null)
+            return response;
+        }
+
+        // GET: api/CollectorGroups/5
+        [Authorize]
+        [HttpGet("group/{id}")]
+        public async Task<ActionResult<CollectGroupsResponse>> GetCollectorGroupById(Guid id)
+        {
+            var result = await _context.CollectorGroups.Where(c => c.GroupId == id).Include(c => c.Group)
+                .ThenInclude(c => c.Members).FirstOrDefaultAsync();
+
+            if (result == null)
             {
                 return NotFound();
             }
 
-            return collectorGroup;
+            var response = new CollectGroupsResponse
+            {
+                Id = result.GroupId,
+                Brgy = result?.Group.Brgy,
+                MeetingDay = result.Group.MeetingDay,
+                MeetingTime = result.Group.MeetingTime,
+                MemberCount = result.Group.Members.Count(),
+                Municipality = result.Group.Municipality,
+                Name = result.Group.Name
+            };
+
+            return response;
         }
 
         // PUT: api/CollectorGroups/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCollectorGroup(Guid id, CollectorGroup collectorGroup)
         {
@@ -104,5 +139,16 @@ namespace Ikabuhi.Backend.Controllers
         {
             return _context.CollectorGroups.Any(e => e.Id == id);
         }
+    }
+
+    public class CollectGroupsResponse
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string Brgy { get; set; }
+        public string Municipality { get; set; }
+        public int MeetingDay { get; set; } // 0=Sunday, 1=Monday, etc.
+        public string MeetingTime { get; set; }
+        public int MemberCount { get; set; }
     }
 }

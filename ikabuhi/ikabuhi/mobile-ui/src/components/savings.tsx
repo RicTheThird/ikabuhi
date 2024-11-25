@@ -1,17 +1,26 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Typography, IconButton, Paper, Divider } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SavingsIcon from "@mui/icons-material/Savings";
 import { useNavigate } from "react-router-dom";
+import { getMyDetails } from "../services/apiService";
+import dayjs from "dayjs";
 
 const Savings = () => {
 
   const navigate = useNavigate();
-  const recentTransactions = [
-    "Hi MARITES! U1750516, PHP 50.00 is deposited to your savings on 03/07/2024. Your Loan Balance in Lifebank is 5,600.00. Thank you.",
-    "Hi MARITES! U1750516, PHP 50.00 is deposited to your savings on 03/07/2024. Your Loan Balance in Lifebank is 5,600.00. Thank you.",
-    "Hi MARITES! U1750516, PHP 50.00 is deposited to your savings on 03/07/2024. Your Loan Balance in Lifebank is 5,600.00. Thank you.",
-  ];
+  const [myDetails, setMyDetails] = useState<any>(null);
+  const [recentTransaction, setRecentTransaction] = useState<any>(null);
+
+  useEffect(() => {
+    getMyDetailsAsync()
+  }, []);
+
+  const getMyDetailsAsync = async () => {
+    const response = await getMyDetails();
+    setRecentTransaction(response?.transactions);
+    setMyDetails(response)
+  }
 
   return (
     <Box
@@ -61,7 +70,7 @@ const Savings = () => {
           Your Total Savings
         </Typography>
         <Typography variant="h4" sx={{ color: "#fff", fontWeight: "bold" }}>
-          ₱ 6,850.00
+          ₱ {myDetails?.memberSavings && myDetails?.memberSavings.length > 0 ? myDetails?.memberSavings[0].runningSavingsAmount.toFixed(2) : 0.00 }
         </Typography>
       </Box>
 
@@ -78,21 +87,22 @@ const Savings = () => {
         }}
       >
         <Typography variant="h6">Recent Savings Transaction</Typography>
-        <Typography
+        {/* <Typography
           variant="body2"
           sx={{ color: "#ff8c00", cursor: "pointer" }}
         >
           Clear All
-        </Typography>
+        </Typography> */}
       </Box>
 
-      {recentTransactions.map((transaction, index) => (
+      {recentTransaction && recentTransaction.map((transaction : any, index: number) => (
         <Paper
           key={index}
           elevation={3}
           sx={{ padding: 2, mb: 2, width: "100%" }}
         >
-          <Typography variant="body2">{transaction}</Typography>
+          <Typography variant="body2">PHP {transaction?.saveAmount.toFixed(2)} is deposited to your savings on {dayjs(transaction?.transactionDate).format('YYYY-MM-DD')}. 
+          {transaction?.status === 'Pending'? 'Your new savings will reflect after we approve this transaction.': '' }</Typography>
         </Paper>
       ))}
     </Box>

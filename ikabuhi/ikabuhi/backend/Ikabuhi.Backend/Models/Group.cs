@@ -1,4 +1,6 @@
-﻿namespace Ikabuhi.Backend.Models
+﻿using System.Text.Json.Serialization;
+
+namespace Ikabuhi.Backend.Models
 {
     public class Group
     {
@@ -8,8 +10,11 @@
         public string Municipality { get; set; }
         public int MeetingDay { get; set; } // 0=Sunday, 1=Monday, etc.
         public string MeetingTime { get; set; }
-        public string Remarks { get; set; }
-        public ICollection<Member> Members { get; set; }
-        public ICollection<CollectorGroup> CollectorGroups { get; set; }
+        public string? Remarks { get; set; }
+
+        public ICollection<Member>? Members { get; set; }
+
+        [JsonIgnore]
+        public ICollection<CollectorGroup>? CollectorGroups { get; set; }
     }
 }

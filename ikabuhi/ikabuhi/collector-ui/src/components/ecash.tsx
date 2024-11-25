@@ -1,26 +1,59 @@
-import React from 'react';
-import { Box, Typography, TextField, MenuItem, Card, CardContent, Button } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Box, Typography, TextField, MenuItem, Card, CardContent, Button, Grid, Alert, Snackbar } from '@mui/material';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
-
-const eCashPayments = [
-  {
-    name: 'Helena Magpantay',
-    clientNo: 'U123623173',
-    description: 'Submit E-Payment form for her transaction in 12/24/2024',
-  },
-  {
-    name: 'Helena Magpantay',
-    clientNo: 'U123623173',
-    description: 'Submit E-Payment form for her transaction in 12/24/2024',
-  },
-  {
-    name: 'Helena Magpantay',
-    clientNo: 'U123623173',
-    description: 'Submit E-Payment form for her transaction in 12/24/2024',
-  },
-];
+import { SnackbarAlert, Transaction } from '../services/interfaces';
+import { downloadECashReceipt, getPendingECashPayments, putTransaction } from '../services/apiService';
 
 const MemberECashPayment = () => {
+
+  const [eCashPayments, setECashPayments] = useState<Transaction[]>([]);
+  const [snackOpen, setSnackOpen] = useState(false);
+  const [alert, setAlert] = useState<SnackbarAlert>();
+
+  useEffect(() => {
+    getEcashList()
+  }, []);
+
+  const getEcashList = async () => {
+    const response = await getPendingECashPayments();
+    setECashPayments(response)
+  }
+
+  const downloadECashFile = async (transactionId: string) => {
+    try {
+      const response = await downloadECashReceipt(transactionId);
+      const contentDisposition = response.headers['content-disposition'];
+      const fileName = contentDisposition?.split('filename=')[1]?.replace(/"/g, '');
+
+      const blob = new Blob([response.data]);
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = fileName || 'download';
+      link.click();
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
+  const handleECashAction = async (transaction: Transaction) => {
+    try {
+      transaction.member = null;
+      transaction.status = 'Approved';
+      const response: any = await putTransaction(transaction)
+      if (response.status === 204) {
+        setAlert({ success: true, message: "ECash payment approved!" })
+      } else {
+        setAlert({ success: false, message: response?.response?.data ?? "Operation failed. Please try again later." })
+      }
+    } catch (error) {
+      console.log(error)
+      setAlert({ success: false, message: "Operation failed. Please try again later." })
+    } finally {
+      setSnackOpen(true)
+    }
+  }
+
+
   return (
     <Box sx={{ padding: 4, backgroundColor: '#f8f4f4', minHeight: '100vh' }}>
       <Box mb={4}>
@@ -40,28 +73,43 @@ const MemberECashPayment = () => {
         </TextField>
         <Button variant="contained" color="primary" sx={{ height: '56px', width: '15%' }}>Submit</Button>
       </Box>
-      <Box display="flex" justifyContent="space-around" flexWrap="wrap" gap={2}>
-        {eCashPayments.map((payment, index) => (
-          <Card key={index} variant="outlined" sx={{ width: '300px', textAlign: 'center', padding: 2 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }} gutterBottom>
-                {payment.name}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                {payment.clientNo} {payment.description}
-              </Typography>
-              <Box mt={2}>
-                <Button variant="contained" color="primary" startIcon={<InsertDriveFileIcon />} sx={{ marginRight: 1 }}>
-                  View E-Payment Form
-                </Button>
-                <Button variant="contained" color="warning">
-                  Notify
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
+      <Grid container spacing={3}>
+        {eCashPayments && eCashPayments.map((payment, index) => (
+          <Grid item key={index} xs={12} md={3} lg={3}>
+            <Card key={index} variant="outlined" sx={{ width: '300px', textAlign: 'center', padding: 2 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }} gutterBottom>
+                  {payment.member?.firstName} {payment.member?.lastName}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  {payment.member?.accountNo} submitted E-Payment form for her/his transaction on {payment.transactionDate}
+                </Typography>
+                <Box mt={2}>
+                  <Button variant="contained" color="primary" size='small'
+                    onClick={() => downloadECashFile(payment.id)}
+                    startIcon={<InsertDriveFileIcon />} sx={{ marginRight: 1 }}>
+                    Download payment proof
+                  </Button>
+                  <Button variant="contained" color="warning" size='small' sx={{ mt: 2 }} onClick={() => handleECashAction(payment)}>
+                    Approve Payment
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
         ))}
-      </Box>
+      </Grid>
+
+      <Snackbar
+        open={snackOpen}
+        autoHideDuration={10000}
+        onClose={() => setSnackOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert onClose={() => setSnackOpen(false)} severity={alert?.success ? "success" : "error"} sx={{ width: '100%' }}>
+          {alert?.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

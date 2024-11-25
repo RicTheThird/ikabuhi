@@ -1,5 +1,5 @@
 // src/components/Login.tsx
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   TextField,
@@ -10,15 +10,52 @@ import {
   IconButton,
   Divider,
   Container,
+  CircularProgress,
 } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Header from "./header";
+import { useNavigate } from "react-router-dom";
+import { login } from "../services/authService";
 
 const Login: React.FC = () => {
-  const [showPassword, setShowPassword] = React.useState(false);
 
+  const navigate = useNavigate();
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [formValues, setFormValues] = useState({
+    userName: "",
+    password: "",
+  });
+
+  const [loginError, setLoginError] = useState('');
+  const [loading, setLoading] = useState(false); // Loading state
   const handleClickShowPassword = () => setShowPassword((show) => !show);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true)
+    try {
+      const response: any = await login({ userName: formValues.userName, password: formValues.password })
+      if (response.status === 200) {
+        setLoginError('')
+        navigate('/home');
+      } else {
+        setLoginError("Invalid User name or password")
+      }
+    } catch (error) {
+      setLoginError("Invalid User name or password")
+    } finally {
+      setLoading(false)
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormValues({
+      ...formValues,
+      [e.target.name]: e.target.value,
+    });
+  };
 
   return (
     <Box>
@@ -64,7 +101,7 @@ const Login: React.FC = () => {
                 component="img"
                 src="./login-logo.png" // Replace with actual logo URL
                 alt="Logo"
-                sx={{ width: 100, height: 100 }}
+                sx={{ width: 200, height: 200 }}
               />
               <Typography variant="h5" fontWeight="bold" mt={2} color="primary">
                 IKABUHI
@@ -74,49 +111,65 @@ const Login: React.FC = () => {
             <Divider orientation="vertical" flexItem />
 
             {/* Right Side - Form */}
-            <Box sx={{ width: "50%", p: 2 }}>
-              <TextField
-                fullWidth
-                label="Username"
-                variant="outlined"
-                margin="normal"
-                InputProps={{
-                  style: { fontWeight: 600, color: "#3f3f3f" },
-                }}
-              />
-              <TextField
-                fullWidth
-                label="Password"
-                variant="outlined"
-                type={showPassword ? "text" : "password"}
-                margin="normal"
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton onClick={handleClickShowPassword} edge="end">
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                  style: { fontWeight: 600, color: "#3f3f3f" },
-                }}
-              />
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{
-                  mt: 3,
-                  backgroundColor: "#ff7f27",
-                  color: "#ffffff",
-                  fontWeight: "bold",
-                  "&:hover": {
-                    backgroundColor: "#e06b22",
-                  },
-                }}
-              >
-                Login
-              </Button>
-            </Box>
+            <form onSubmit={handleLogin}>
+              <Box sx={{ p: 3 }}>
+                {loginError &&
+                  <Typography variant="body2" color="error">
+                    {loginError}
+                  </Typography>
+                }
+                <TextField
+                  name="userName"
+                  fullWidth
+                  label="Username"
+                  variant="outlined"
+                  margin="normal"
+                  required
+                  onChange={handleInputChange}
+                  InputProps={{
+                    style: { fontWeight: 600, color: "#3f3f3f" },
+                  }}
+                />
+                <TextField
+                  fullWidth
+                  label="Password"
+                  name='password'
+                  variant="outlined"
+                  type={showPassword ? "text" : "password"}
+                  margin="normal"
+                  required
+                  onChange={handleInputChange}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton onClick={handleClickShowPassword} edge="end">
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                    style: { fontWeight: 600, color: "#3f3f3f" },
+                  }}
+                />
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  sx={{
+                    mt: 3,
+                    backgroundColor: "#ff7f27",
+                    color: "#ffffff",
+                    fontWeight: "bold",
+                    "&:hover": {
+                      backgroundColor: "#e06b22",
+                    },
+                  }}
+                  disabled={loading}
+                  startIcon={loading ? <CircularProgress size={20} /> : null}
+                >
+                  Login
+                </Button>
+              </Box>
+            </form>
           </Paper>
         </Container>
       </Box>

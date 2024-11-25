@@ -11,6 +11,10 @@ import Savings from './components/savings';
 import Withdrawal from './components/withdrawal';
 import CreditScore from './components/credit-score';
 import CreditRewards from './components/rewards';
+import LoanSelection from './components/loan-selection';
+import RegularLoanApplication from './components/regular-loan-application';
+import BizLoanApplication from './components/biz-loan-application';
+import WashLoanApplication from './components/wash-loan-application';
 
 const App: React.FC = () => {
   return (
@@ -23,7 +27,11 @@ const App: React.FC = () => {
         <Route path="/savings" element={<Savings />} />
         <Route path="/withdraw" element={<Withdrawal />} />
         <Route path="/credit-score" element={<CreditScore />} />
-        <Route path="/rewards" element={<CreditRewards />} />
+        <Route path="/rewards/:points" element={<CreditRewards />} />
+        <Route path="/loan-select" element={<LoanSelection />} />
+        <Route path="/regular-loan" element={<RegularLoanApplication />} />
+        <Route path="/biz-loan" element={<BizLoanApplication />} />
+        <Route path="/wash-loan" element={<WashLoanApplication />} />
       </Routes>
     </Router>
   );

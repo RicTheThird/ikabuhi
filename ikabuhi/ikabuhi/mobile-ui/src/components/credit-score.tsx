@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -14,14 +14,45 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
+import { Member, Payments } from "../services/interfaces";
+import { getMyDetails } from "../services/apiService";
 
 const CreditScore = () => {
   const navigate = useNavigate();
+
+  const [myDetails, setMyDetails] = useState<Member>();
+  const [payments, setPayments] = useState<Payments[]>([]);
   const [creditScore, setCreditScore] = useState({
     score: 350,
     recentPoints:
       "2 points added to your Total Credit Score by paying on your repayment loan and savings on 03/07/2024.",
   });
+
+
+  useEffect(() => {
+    getMyDetailsAsync()
+  }, []);
+
+  const getMyDetailsAsync = async () => {
+    const response = await getMyDetails();
+    setPayments(response?.payments)
+    setMyDetails(response)
+  }
+
+  const getCreditScore = (): number => {
+    if (payments && payments.length > 0)
+      return payments.reduce((acc, curr) => acc + curr.creditPointsGained, 0);
+    else
+      return 0;
+  }
+
+  const getRecetPoints = (): string => {
+    if (payments && payments.length > 0)
+      return `${payments[0].creditPointsGained} points added to your Total Credit Score by paying on your repayment loan and savings on ${dayjs(payments[0].paymentDate).format('YYYY-MM-DD')}.`
+    else
+      return "No recent transaction";
+  }
+
 
   return (
     <Box
@@ -93,7 +124,7 @@ const CreditScore = () => {
             }}
           >
             <Typography variant="h3" sx={{ color: "#ff8c00" }}>
-              {creditScore.score}
+              {getCreditScore()}
             </Typography>
           </Box>
         </Box>
@@ -112,7 +143,7 @@ const CreditScore = () => {
             Recent Credit Points Garnered
           </Typography>
           <Typography variant="body2">
-            {creditScore.recentPoints}
+            {getRecetPoints()}
           </Typography>
         </Box>
       </Paper>
@@ -121,7 +152,7 @@ const CreditScore = () => {
         <Button
           variant="contained"
           sx={{ backgroundColor: "#ff8c00", color: "#fff", ml: 4 }}
-          onClick={() => navigate('/rewards')}
+          onClick={() => navigate(`/rewards/${getCreditScore()}`)}
         >
           View
         </Button>

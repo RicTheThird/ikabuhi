@@ -1,41 +1,28 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Typography, Paper, Divider, IconButton } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate } from 'react-router-dom';
+import { getMyDetails } from '../services/apiService';
+import dayjs from 'dayjs';
+import { Label } from '@mui/icons-material';
+import { Member, Payments } from '../services/interfaces';
 
 const TransactionHistory = () => {
 
   const navigate = useNavigate();
-  const transactions = [
-    {
-      date: '02-24-2024',
-      transactionNo: 15,
-      savings: {
-        deposit: 69.55,
-        balance: 8065.09,
-      },
-      loanPayment: {
-        installmentNo: 15,
-        amountPaid: 1000,
-        newLoanBalance: 26000,
-      },
-    },
-    {
-      date: '02-17-2024',
-      transactionNo: 14,
-      savings: {
-        deposit: 69.55,
-        balance: 8065.09,
-      },
-      loanPayment: {
-        installmentNo: 14,
-        amountPaid: 1000,
-        loanBalance: 27000,
-      },
-    },
-    // Add more transactions as needed
-  ];
+  const [myDetails, setMyDetails] = useState<Member>();
+  const [recentTransactions, setRecentTransaction] = useState<Payments[]>([]);
 
+  useEffect(() => {
+    getMyDetailsAsync()
+  }, []);
+
+  const getMyDetailsAsync = async () => {
+    const response = await getMyDetails();
+    setRecentTransaction(response?.payments);
+    setMyDetails(response)
+  }
+  
   return (
     <Box
       sx={{
@@ -68,38 +55,44 @@ const TransactionHistory = () => {
         </Typography>
       </Box>
       <Typography variant="body1" sx={{ mb: 2 }}>
-        Your recent borrowed Loan amounting <b>30,000.00</b> will process 23 transactions
+        Your recent borrowed Loan amounting <b>₱{myDetails?.memberLoans.find((m: any) => m.isActive === true)?.loanBalance.toFixed(2) ?? 0.00}</b> 
+        {" "} will process <strong>{myDetails?.memberLoans.find((m: any) => m.isActive === true)?.productLoan?.transactions ?? 0}</strong> transactions
       </Typography>
 
       {/* Transactions List */}
-      {transactions.map((transaction, index) => (
+      {recentTransactions && recentTransactions.map((payment : Payments, index: number) => (
         <Paper key={index} elevation={3} sx={{ padding: 2, mb: 3, width: '100%' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <ArrowBackIcon sx={{ color: '#ff8c00', mr: 1 }} />
-              <Typography variant="h6">{transaction.date}</Typography>
+              {/* <ArrowBackIcon sx={{ color: '#ff8c00', mr: 1 }} /> */}
+              <Typography variant="body1">{dayjs(payment.paymentDate).format('YYYY-MM-DD')}</Typography>
             </Box>
             <Typography variant="body2" fontWeight="bold">
-              Transaction No.: {transaction.transactionNo}
+              Transaction No.: {recentTransactions.length - index}
             </Typography>
           </Box>
+          {/* <Typography color={transaction.status == 'Pending' ? 'warning' : 'info'} variant='caption'>Status: {transaction.status}</Typography> */}
           <Divider sx={{ mb: 2 }} />
           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between' }}>
             <Box sx={{ flex: 1, mb: { xs: 2, sm: 0 } }}>
               <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
                 Savings
               </Typography>
-              <Typography variant="body2">Savings/CBU Deposit: {transaction.savings.deposit}</Typography>
-              <Typography variant="body2">New Savings Balance: {transaction.savings.balance}</Typography>
+              <Typography variant="body2">Savings/CBU Deposit: ₱ {payment.savingsPayment?.toFixed(2) ?? 0}</Typography>
             </Box>
             <Divider orientation="vertical" flexItem sx={{ mx: 2, display: { xs: 'none', sm: 'block' } }} />
             <Box sx={{ flex: 1 }}>
               <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
                 Loan Payment
               </Typography>
-              <Typography variant="body2">Installment No.: {transaction.loanPayment.installmentNo}</Typography>
-              <Typography variant="body2">Amount Paid: {transaction.loanPayment.amountPaid}</Typography>
-              <Typography variant="body2">New Loan Balance: {transaction.loanPayment.newLoanBalance}</Typography>
+              <Typography variant="body2">Amount Paid: ₱ {payment.loanPayment?.toFixed(2) ?? 0}</Typography>
+            </Box>
+            <Divider orientation="vertical" flexItem sx={{ mx: 2, display: { xs: 'none', sm: 'block' } }} />
+            <Box sx={{ flex: 1, mt: 2 }}>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
+                Withdrawal
+              </Typography>
+              <Typography variant="body2">Amount: ₱ {payment.withdrawalAmount?.toFixed(2) ?? 0}</Typography>
             </Box>
           </Box>
         </Paper>

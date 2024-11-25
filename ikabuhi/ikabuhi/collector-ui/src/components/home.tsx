@@ -18,13 +18,18 @@ import PersonIcon from "@mui/icons-material/Person";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Link, Outlet, useNavigate } from "react-router-dom";
+import { logout } from "../services/authService";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = React.useState(null);
-
+  const [anchorAccount, setAnchorAccount] = React.useState(null);
   const handleMenuClick = (event: any) => {
     setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClick2 = (event: any) => {
+    setAnchorAccount(event.currentTarget);
   };
 
   const handleMenuClose = () => {
@@ -54,9 +59,26 @@ const HomePage: React.FC = () => {
             <IconButton color="primary">
               <ChatIcon sx={{ color: "#ff6600", fontSize: "40px" }} />
             </IconButton>
-            <IconButton color="primary">
+            <IconButton color="primary" onClick={handleMenuClick2}>
               <PersonIcon sx={{ color: "#ff6600", fontSize: "40px" }} />
             </IconButton>
+
+            {/* Dropdown Menu for Logout */}
+            <Menu
+              anchorEl={anchorAccount}
+              open={Boolean(anchorAccount)} // Menu is open when anchorEl is not null
+              onClose={handleMenuClose} // Close menu when clicked outside
+              anchorOrigin={{
+                vertical: "bottom", // Menu appears below the icon
+                horizontal: "center",
+              }}
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "center",
+              }}
+            >
+              <MenuItem onClick={logout}>Logout</MenuItem>
+            </Menu>
           </Box>
         </Toolbar>
       </AppBar>
