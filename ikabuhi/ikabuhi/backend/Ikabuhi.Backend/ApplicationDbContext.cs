@@ -19,6 +19,9 @@ namespace Ikabuhi.Backend
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<MemberWithdrawal> MemberWithdrawal { get; set; }
         public DbSet<Payments> Payments { get; set; }
+        public DbSet<WashLoan> WashLoans { get; set; }
+        public DbSet<BusinessLoan> BusinessLoans { get; set; }
+        public DbSet<SocialService> SocialServices { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

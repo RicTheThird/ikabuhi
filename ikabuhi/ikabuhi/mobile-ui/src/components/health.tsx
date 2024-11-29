@@ -15,6 +15,11 @@ import {
     CircularProgress,
     Alert,
     Snackbar,
+    FormControl,
+    InputLabel,
+    Select,
+    RadioGroup,
+    Radio,
     Dialog,
     DialogActions,
     DialogContent,
@@ -23,63 +28,48 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
-import { Member, SnackbarAlert } from "../services/interfaces";
-import { getMyDetails, postBizLoan } from "../services/apiService";
+import { Member, ProductLoans, SnackbarAlert } from "../services/interfaces";
+import { getMyDetails, getProductLoans, postMemberLoan, postSocialService } from "../services/apiService";
 import dayjs from "dayjs";
 
-
 const defaultFormValues = {
-    businessName: '',
-    businessType: '',
-    businessAddress: '',
-    loanAmount: undefined,
-    annualRevenue: undefined,
-    estMonthlyExpenses: undefined,
-    purposeLoan: '',
-    paymentTerms: ''
+    hltBoolExistCondition: undefined,
+    hltExistCondition: '',
+    hltBoolMedication: undefined,
+    hltMedication: '',
+    hltBoolAllergies: undefined,
+    hltAllergies: '',
+    hltBoolHealthCare: undefined,
+    hltHealthCare: '',
+    hltReasonApply: '',
+    hltSupport: '',
+    hltEmergencyContact: '',
+    hltRelationship: '',
+    hltContact: '',
+    hltBoolInsurance: undefined,
+    hltInsurance: '',
+    isActive: true,
+    status: 'Pending',
+    type: 'Health'
 };
 
-const BizLoanApplication: React.FC = () => {
+const HealthApplication: React.FC = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1)
-    const [myDetails, setMyDetails] = useState<Member>();
-
+    
     const [open, setOpen] = useState(false);
+    const [myDetails, setMyDetails] = useState<Member>();
+    const [productLoans, setProductLoans] = useState<ProductLoans[]>([]);
     const [loading, setLoading] = useState(false); // Loading state
     const [snackOpen, setSnackOpen] = useState(false);
     const [alert, setAlert] = useState<SnackbarAlert>();
     const [formValues, setFormValues] = useState(defaultFormValues);
 
     useEffect(() => {
-        getMyDetailsAsync()
+        getProductLoansAsync();
+        getMyDetailsAsync();
     }, []);
 
-    const handleClose = () => {
-        setOpen(false)
-        navigate('/loan-select')
-    }
-
-    const getMyDetailsAsync = async () => {
-        const response: Member = await getMyDetails();
-        setMyDetails(response)
-        if (response.payments && response.payments.length > 0) {
-            const cscore = response.payments.reduce((acc, curr) => acc + curr.creditPointsGained, 0);
-            if (cscore < 200) {
-                setOpen(true)
-            }
-        }
-        else
-            setOpen(true)
-    }
-
-    const handleNext = () => {
-        setStep(step + 1);
-        console.log(formValues)
-    };
-
-    const handleBack = () => {
-        setStep(step - 1);
-    };
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         console.log(e.target.type)
         setFormValues({
@@ -88,16 +78,46 @@ const BizLoanApplication: React.FC = () => {
         });
     }
 
+    const handleClose = () => {
+        setOpen(false)
+        navigate('/social-services')
+    }
 
+    const getProductLoansAsync = async () => {
+        const response = await getProductLoans();
+        setProductLoans(response)
+    }
+
+    const getMyDetailsAsync = async () => {
+        const response: Member = await getMyDetails();
+        setMyDetails(response)
+        if (response.payments && response.payments.length > 0) {
+            const cscore = response.payments.reduce((acc, curr) => acc + curr.creditPointsGained, 0);
+            if (cscore < 190) {
+                setOpen(true)
+            }
+        }
+        else
+            setOpen(true)
+    }
+
+    const handleNext = () => {
+        console.log(formValues)
+        setStep(step + 1);
+    };
+
+    const handleBack = () => {
+        setStep(step - 1);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         console.log(formValues)
         setLoading(true)
         try {
-            const response: any = await postBizLoan(formValues)
+            const response: any = await postSocialService(formValues)
             if (response.status === 200) {
-                setAlert({ success: true, message: "Loan application submitted. Approval may take 2-3 business days" });
+                setAlert({ success: true, message: "Application submitted. Approval may take 2-3 business days" });
                 setFormValues(defaultFormValues);
                 setStep(1)
             } else {
@@ -134,17 +154,15 @@ const BizLoanApplication: React.FC = () => {
             >
                 <IconButton
                     sx={{ color: "#fff", mb: 1 }}
-                    onClick={() => navigate('/loan-select')}>
+                    onClick={() => navigate('/social-services')}>
 
                     <ArrowBackIcon />
                 </IconButton>
                 <Typography variant="h5" sx={{ fontWeight: "bold", color: "#ff8c00" }}>
-                    Small Business Loan
+                    Healthcare Program
                 </Typography>
                 <Typography variant="body2">
-                    This Loan Application form must be fully completed. Failure to
-                    disclose all required information may delay approval of your loan
-                    application.
+                    IKABUHI PROGRAM Social Services Application
                 </Typography>
             </Box>
 
@@ -189,7 +207,6 @@ const BizLoanApplication: React.FC = () => {
                     <>
                         <form onSubmit={handleNext}>
                             <Card sx={{ mb: 2, borderRadius: 2, overflow: "hidden" }}>
-
                                 <CardContent>
                                     <Typography
                                         variant="h6"
@@ -229,8 +246,7 @@ const BizLoanApplication: React.FC = () => {
 
                                     {/* Confirmation Checkbox */}
                                     <FormControlLabel
-                                        required
-                                        control={<Checkbox sx={{ color: "#FF6F00" }} />}
+                                        control={<Checkbox sx={{ color: "#FF6F00" }} required />}
                                         label={
                                             <Typography variant="body2">
                                                 Check this if your information is accurate above to proceed
@@ -263,97 +279,105 @@ const BizLoanApplication: React.FC = () => {
                         <form onSubmit={handleNext}>
                             <Card sx={{ mb: 2, borderRadius: 2, overflow: "hidden" }}>
                                 <CardContent>
-                                    <Typography
-                                        variant="h6"
-                                        sx={{ fontWeight: "bold", mb: 1, color: "#002D72" }}
-                                    >
-                                        II. BUSINESS INFORMATION DETAILS
+                                    <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+                                        II. Health Condition
                                     </Typography>
-                                    <Divider sx={{ mb: 2 }} />
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={12}>
-                                            <TextField label="Business Name"
-                                                required
-                                                name="businessName"
+
+                                    <Grid container spacing={2} sx={{ mb: 2 }}>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography>Do you have any existing medical conditions?</Typography>
+                                            <RadioGroup row
+                                                value={formValues.hltBoolExistCondition}
+                                                name="hltBoolExistCondition"
+                                                onChange={handleInputChange}>
+                                                <FormControlLabel required value={true} control={<Radio />} label="Yes" />
+                                                <FormControlLabel required value={false} control={<Radio />} label="No" />
+                                            </RadioGroup>
+                                            <TextField value={formValues.hltExistCondition}
+                                                name="hltExistCondition"
                                                 onChange={handleInputChange}
-                                                value={formValues.businessName}
-                                                fullWidth variant="outlined" />
+                                                fullWidth label="If Yes, please specify:" variant="outlined" sx={{ mt: 1 }} />
                                         </Grid>
-                                        <Grid item xs={12}>
-                                            <TextField
-                                                label="Business Type"
-                                                fullWidth
-                                                variant="outlined"
-                                                select
-                                                required
-                                                value={formValues.businessType}
-                                                name="businessType"
-                                                onChange={handleInputChange}
-                                            >
-                                                <MenuItem value={"Retail"}>Retail</MenuItem>
-                                                <MenuItem value={"Service"}>Service</MenuItem>
-                                                <MenuItem value={"Manufacturing"}>Manufacturing</MenuItem>
-                                            </TextField>
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <TextField label="Business Address"
-                                                required
-                                                value={formValues.businessAddress}
-                                                name="businessAddress"
-                                                onChange={handleInputChange}
-                                                fullWidth
-                                                variant="outlined" />
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <Typography variant="h6" sx={{ fontWeight: "bold", color: "#002D72" }}>
-                                                Loan Request Detail
-                                            </Typography>
-                                        </Grid>
-                                        <Grid item xs={6}>
-                                            <TextField label="Loan Amount Requested"
-                                                required
-                                                type="number"
-                                                value={formValues.loanAmount}
-                                                name="loanAmount"
-                                                onChange={handleInputChange}
-                                                fullWidth
-                                                variant="outlined" />
-                                        </Grid>
-                                        <Grid item xs={6}>
-                                            <TextField
-                                                label="Repayment Term"
-                                                fullWidth
-                                                variant="outlined"
-                                                select
-                                                required
-                                                value={formValues.paymentTerms}
-                                                name="paymentTerms"
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography>Are you currently taking any medication?</Typography>
+                                            <RadioGroup row
+                                                value={formValues.hltBoolMedication}
+                                                name="hltBoolMedication"
                                                 onChange={handleInputChange}
                                             >
-                                                <MenuItem value={"6 months"}>6 Months</MenuItem>
-                                                <MenuItem value={"12 months"}>12 Months</MenuItem>
-                                                <MenuItem value={"24 months"}>24 Months</MenuItem>
-                                            </TextField>
-                                        </Grid>
-                                        <Grid item xs={12}>
+                                                <FormControlLabel required value={true} control={<Radio />} label="Yes" />
+                                                <FormControlLabel required value={false} control={<Radio />} label="No" />
+                                            </RadioGroup>
                                             <TextField
-                                                label="Purpose of Loan"
-                                                fullWidth
-                                                variant="outlined"
-                                                select
-                                                required
-                                                value={formValues.purposeLoan}
-                                                name="purposeLoan"
+                                                value={formValues.hltMedication}
+                                                name="hltMedication"
                                                 onChange={handleInputChange}
-                                            >
-                                                <MenuItem value={"Expansion"}>Expansion</MenuItem>
-                                                <MenuItem value={"Inventory"}>Inventory</MenuItem>
-                                                <MenuItem value={"Equipment"}>Equipment</MenuItem>
-                                            </TextField>
+                                                fullWidth label="If Yes, please specify:" variant="outlined" sx={{ mt: 1 }} />
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography>Do you have any allergies?</Typography>
+                                            <RadioGroup row
+                                                value={formValues.hltBoolAllergies}
+                                                name="hltBoolAllergies"
+                                                onChange={handleInputChange}>
+                                                <FormControlLabel required value={true} control={<Radio />} label="Yes" />
+                                                <FormControlLabel required value={false} control={<Radio />} label="No" />
+                                            </RadioGroup>
+                                            <TextField fullWidth
+                                                value={formValues.hltAllergies}
+                                                name="hltAllergies"
+                                                onChange={handleInputChange}
+                                                label="If Yes, please specify:" variant="outlined" sx={{ mt: 1 }} />
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography>Do you have a primary healthcare provider?</Typography>
+                                            <RadioGroup row
+                                                value={formValues.hltBoolHealthCare}
+                                                name="hltBoolHealthCare"
+                                                onChange={handleInputChange}>
+                                                <FormControlLabel required value={true} control={<Radio />} label="Yes" />
+                                                <FormControlLabel required value={false} control={<Radio />} label="No" />
+                                            </RadioGroup>
+                                            <TextField fullWidth
+                                                value={formValues.hltHealthCare}
+                                                name="hltHealthCare"
+                                                onChange={handleInputChange}
+                                                label="If Yes, please specify:" variant="outlined" sx={{ mt: 1 }} />
                                         </Grid>
                                     </Grid>
+
+                                    <Typography variant="subtitle1" gutterBottom>
+                                        Health Program Enrollment
+                                    </Typography>
+
+                                    <TextField
+                                        fullWidth
+                                        label="Why are you applying for this health program?"
+                                        multiline
+                                        rows={3}
+                                        variant="outlined"
+                                        required
+                                        value={formValues.hltReasonApply}
+                                        name="hltReasonApply"
+                                        onChange={handleInputChange}
+                                        sx={{ mb: 2 }}
+                                    />
+
+                                    <TextField
+                                        fullWidth
+                                        label="What kind of support are you expecting from this health program?"
+                                        multiline
+                                        rows={3}
+                                        required
+                                        value={formValues.hltSupport}
+                                        name="hltSupport"
+                                        onChange={handleInputChange}
+                                        variant="outlined"
+                                        sx={{ mb: 2 }}
+                                    />
                                 </CardContent>
                             </Card>
+
                             <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
                                 <Button
                                     variant="contained"
@@ -392,47 +416,50 @@ const BizLoanApplication: React.FC = () => {
                         <form onSubmit={handleSubmit}>
                             <Card sx={{ mb: 2, borderRadius: 2, overflow: "hidden" }}>
                                 <CardContent>
-                                    <Typography
-                                        variant="h6"
-                                        sx={{ fontWeight: "bold", mb: 1, color: "#002D72" }}
-                                    >
-                                        III. FINANCIAL OBLIGATIONS
+                                    <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+                                        III. EMERGENCY CONTACT INFORMATION
                                     </Typography>
-                                    <Divider sx={{ mb: 2 }} />
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={12}>
-                                            <TextField label="Current Annual Revenue"
-                                                required
-                                                type="number"
-                                                value={formValues.annualRevenue}
-                                                name="annualRevenue"
-                                                onChange={handleInputChange}
-                                                fullWidth variant="outlined" />
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <TextField label="Estimated Monthly Expenses"
-                                                required
-                                                type="number"
-                                                value={formValues.estMonthlyExpenses}
-                                                name="estMonthlyExpenses"
-                                                onChange={handleInputChange}
-                                                fullWidth variant="outlined" />
-                                        </Grid>
-                                    </Grid>
-                                    <Box sx={{ mt: 2 }}>
-                                        <FormControlLabel
-                                            required
-                                            control={<Checkbox sx={{ color: "#FF6F00" }} />}
-                                            label={
-                                                <Typography variant="body2">
-                                                    I, {myDetails?.firstName} {myDetails?.lastName}, declare that all the information provided in
-                                                    this application is true and complete to the best of my
-                                                    knowledge. I understand that any misrepresentation or false
-                                                    information may result in the denial of this loan application.
-                                                </Typography>
-                                            }
-                                        />
-                                    </Box>
+
+                                    <TextField fullWidth label="Full Name of Emergency Contact"
+                                        required
+                                        value={formValues.hltEmergencyContact}
+                                        name="hltEmergencyContact"
+                                        onChange={handleInputChange} variant="outlined" sx={{ mb: 2 }} />
+                                    <TextField fullWidth label="Relationship to Member"
+                                        required
+                                        value={formValues.hltRelationship}
+                                        name="hltRelationship"
+                                        onChange={handleInputChange}
+                                        variant="outlined" sx={{ mb: 2 }} />
+                                    <TextField fullWidth label="Contact Number"
+                                        required
+                                        value={formValues.hltContact}
+                                        name="hltContact"
+                                        onChange={handleInputChange}
+                                        variant="outlined" sx={{ mb: 2 }} />
+
+                                    <Typography variant="subtitle1" gutterBottom>
+                                        Insurance Information
+                                    </Typography>
+
+                                    <Typography>Do you have health insurance coverage?</Typography>
+                                    <RadioGroup row value={formValues.hltBoolInsurance}
+                                        name="hltBoolInsurance"
+                                        onChange={handleInputChange}>
+                                        <FormControlLabel required value={true} control={<Radio />} label="Yes" />
+                                        <FormControlLabel required value={false} control={<Radio />} label="No" />
+                                    </RadioGroup>
+                                    <TextField fullWidth label="If Yes, please specify:"
+                                        value={formValues.hltInsurance}
+                                        name="hltInsurance"
+                                        onChange={handleInputChange} variant="outlined" sx={{ mt: 1, mb: 2 }} />
+
+                                    <FormControlLabel
+                                        required
+                                        control={<Checkbox />}
+                                        label="I hereby declare that the information provided in this application is accurate and complete to the best of my knowledge. I understand that providing false information may result in the denial of my enrollment in the health program."
+                                        sx={{ mb: 2 }}
+                                    />
                                 </CardContent>
                             </Card>
                             <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
@@ -466,9 +493,11 @@ const BizLoanApplication: React.FC = () => {
                                     Submit
                                 </Button>
                             </Box>
-                        </form></>
+                        </form>
+                    </>
                 )}
             </Box>
+
             <Snackbar
                 open={snackOpen}
                 autoHideDuration={10000}
@@ -493,7 +522,7 @@ const BizLoanApplication: React.FC = () => {
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                    You need at least <b>200 credit points</b> to unlock this priviledge.  You can do it!
+                    You need at least <b>190 credit points</b> to unlock this priviledge.  You can do it!
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
@@ -506,4 +535,4 @@ const BizLoanApplication: React.FC = () => {
     );
 };
 
-export default BizLoanApplication;
+export default HealthApplication;

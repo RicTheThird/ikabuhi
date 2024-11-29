@@ -126,7 +126,7 @@ namespace Ikabuhi.Backend.Controllers
                 .Include(m => m.MemberLoans).Include(m => m.Transactions).Include(m => m.MemberSavings).FirstOrDefaultAsync();
 
             var savings = userDetails?.MemberSavings?.FirstOrDefault();
-            var activeLoan = userDetails?.MemberLoans?.Where(m => m.IsActive).FirstOrDefault();
+            var activeLoan = userDetails?.MemberLoans?.Where(m => m.IsActive && m.Status == "Approved").FirstOrDefault();
 
             //get all pending transactions to add
             var pendingTransactions = userDetails.Transactions.Where(t => t.Status == "Pending");

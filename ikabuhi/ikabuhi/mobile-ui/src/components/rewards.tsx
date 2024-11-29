@@ -16,6 +16,7 @@ interface Reward {
   name: string;
   points: number;
   isUnlocked: boolean;
+  route: string;
 }
 
 
@@ -24,13 +25,13 @@ const CreditRewards: React.FC = () => {
   const { points } = useParams();
 
   const rewards: Reward[] = [
-    { name: "Small Business Loan", points: 200, isUnlocked: Number(points) >= 200 },
-    { name: "Wash Loan", points: 300, isUnlocked: Number(points) >= 300 },
-    { name: "Microinsurance", points: 150, isUnlocked: false },
-    { name: "Loan Insurance", points: 230, isUnlocked: false },
-    { name: "Business Development Program", points: 210, isUnlocked: false },
-    { name: "Educational Scholarship Program", points: 480, isUnlocked: false },
-    { name: "Health", points: 190, isUnlocked: false },
+    { name: "Small Business Loan", points: 200, isUnlocked: Number(points) >= 200, route: "/biz-loan" },
+    { name: "Wash Loan", points: 300, isUnlocked: Number(points) >= 300, route: "/wash-loan" },
+    { name: "Microinsurance", points: 150, isUnlocked:  Number(points) >= 150, route: "/micro-insurance"  },
+    { name: "Loan Insurance", points: 230, isUnlocked:  Number(points) >= 230, route: "/loan-insurance" },
+    { name: "Business Development Program", points: 210, isUnlocked:  Number(points) >= 210, route: "/livelihood" },
+    { name: "Educational Scholarship Program", points: 480, isUnlocked:  Number(points) >= 480, route: "/scholarship" },
+    { name: "Health", points: 190, isUnlocked:  Number(points) >= 190, route: "/health" },
   ];
 
 
@@ -92,7 +93,7 @@ const CreditRewards: React.FC = () => {
                 borderRadius: 1,
               }}
             >
-              <CardContent sx={{ padding: 0 }}>
+              <CardContent sx={{ padding: 0 }}  onClick={() => reward.isUnlocked ? navigate(reward.route) : null}>
                 <Typography
                   variant="subtitle1"
                   color="text.secondary"

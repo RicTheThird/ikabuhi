@@ -13,6 +13,8 @@ import MemberSavingsCreditScore from './components/members-savings-creditscore';
 import WithdrawalApplication from './components/withdrawal-application';
 import LoanApplication from './components/loan-application';
 import InsuranceApplication from './components/insurance-application';
+import SocialServicesApplication from './components/social-services';
+import MemberInformationCard from './components/member-info';
 
 const App: React.FC = () => {
   return (
@@ -31,6 +33,8 @@ const App: React.FC = () => {
           <Route path="withdrawal-application" element={<WithdrawalApplication />} />
           <Route path="loan-application" element={<LoanApplication />} />
           <Route path="insurance-application" element={<InsuranceApplication />} />
+          <Route path="social-services-application" element={<SocialServicesApplication />} />
+          <Route path="member-info/:memberId" element={<MemberInformationCard />} />
         </Route>
       </Routes>
     </Router>

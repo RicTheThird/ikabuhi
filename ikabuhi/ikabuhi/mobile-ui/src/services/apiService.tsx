@@ -45,12 +45,34 @@ export const postMyGroup = async (data: any) => {
     const response = await axiosInstance.post('/Groups', data);
     return response.data;
 };
+
+export const postSocialService = async (data: any) => {
+    const response = await axiosInstance.post('/SocialServices', data);
+    return response;
+};
 //#endregion
 
 //#region ProductLoan
 export const getProductLoans = async () => {
     const response = await axiosInstance.get('/ProductLoans');
     return response.data;
+};
+//#endregion
+
+//#region MemberLoan
+export const postBizLoan = async (data: any) => {
+    const response = await axiosInstance.post('/MemberLoans/bizloan', data);
+    return response;
+};
+
+export const postWashLoan = async (data: any) => {
+    const response = await axiosInstance.post('/MemberLoans/washloan', data);
+    return response;
+};
+
+export const postMemberLoan = async (data: any) => {
+    const response = await axiosInstance.post('/MemberLoans', data);
+    return response;
 };
 //#endregion
 

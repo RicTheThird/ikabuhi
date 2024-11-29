@@ -42,14 +42,17 @@ namespace Ikabuhi.Backend.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Member>> GetMember(Guid id)
         {
-            var member = await _context.Members.FindAsync(id);
+            return await _context.Members.Where(m => m.Id == id)
+                .Include(m => m.MemberLoans).ThenInclude(m => m.ProductLoan)
+                .Include(m => m.Group)
+                .Include(m => m.WashLoans)
+                .Include(m => m.BusinessLoans)
+                .Include(m => m.SocialServices)
+                .Include(m => m.MemberWithdrawals)
+                .Include(m => m.Transactions.OrderByDescending(s => s.TransactionDate).Take(20))
+                .Include(m => m.Payments.Where(p => p.Status == "Submitted").OrderByDescending(p => p.PaymentDate))
+                .Include(m => m.MemberSavings.OrderByDescending(s => s.LastPaymentDate).Take(1)).FirstOrDefaultAsync();
 
-            if (member == null)
-            {
-                return NotFound();
-            }
-
-            return member;
         }
 
         // GET: api/members/group/5
@@ -335,12 +338,16 @@ namespace Ikabuhi.Backend.Controllers
             public decimal? CollateralTypeAmount2 { get; set; }
             public string? CollateralType3 { get; set; }
             public decimal? CollateralTypeAmount3 { get; set; }
-            public string GuarantorName { get; set; }
-            public string GuarantorRelation { get; set; }
-            public string SourceOfIncome { get; set; }
+            public string? GuarantorName { get; set; }
+            public string? GuarantorRelation { get; set; }
+            public string? SourceOfIncome { get; set; }
             public string? Status { get; set; } // Approve, Decline, Pending
             public decimal? LoanBalance { get; set; }
             public DateTime FirstPaymentDate { get; set; }
+            public decimal? LiabilityLoanBalance { get; set; }
+            public decimal? LiabilityLoanBalanceWeeklyPayments { get; set; }
+            public decimal? ExternalSavingsBalance { get; set; }
+            public decimal? MonthlyExpenses { get; set; }
         }
     }
 }

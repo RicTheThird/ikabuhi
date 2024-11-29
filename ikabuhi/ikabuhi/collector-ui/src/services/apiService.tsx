@@ -58,6 +58,27 @@ export const getGroupMembers = async (groupId: string) => {
     return response.data;
 };
 
+export const getMemberById = async (id: string) => {
+    const response = await axiosInstance.get(`/members/${id}`);
+    return response.data;
+};
+
+export const updateLoanStatus = async ( type: string, id: string, status: string) => {
+    const response = await axiosInstance.put(`/MemberLoans/loan-status/${type}/${id}/${status}`);
+    return response;
+};
+
+
+export const updateSocialStatus = async (id: string, status: string) => {
+    const response = await axiosInstance.put(`/SocialServices/status/${id}/${status}`);
+    return response;
+};
+
+export const getPendingSocialServices = async () => {
+    const response = await axiosInstance.get(`/SocialServices/pendings`);
+    return response.data;
+};
+
 export const registerMember = async (form: any) => {
     let formData = new FormData()
     for (var key in form) {
@@ -121,6 +142,10 @@ export const getPendingECashPayments = async () => {
     return response.data;
 };
 
+export const getPendingLoanApplications = async () => {
+    const response = await axiosInstance.get(`/MemberLoans/pendings`);
+    return response.data;
+};
 
 export const putTransaction = async (data: any) => {
     const response = await axiosInstance.put(`/transactions/${data.id}`, data);

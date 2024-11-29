@@ -3,8 +3,8 @@ import { useLocation } from 'react-router-dom';
 
 // Create an Axios instance
 const axiosInstance = axios.create({
-    baseURL: "https://ikabuhi-api.azurewebsites.net/api"// -- for prod
-    //baseURL: "/api",
+    //baseURL: "https://ikabuhi-api.azurewebsites.net/api"// -- for prod
+    baseURL: "/api",
 });
 
 

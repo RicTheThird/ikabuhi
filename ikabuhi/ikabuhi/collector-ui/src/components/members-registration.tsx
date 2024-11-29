@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Box, TextField, Typography, Button, MenuItem, IconButton, InputAdornment } from "@mui/material";
+import { Box, TextField, Typography, Button, MenuItem, IconButton, InputAdornment, CircularProgress, Alert, Snackbar } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import { BRGYS } from "../constants";
 import { getCollectorsByGroup, getGroupById, getProductLoans, registerMember } from "../services/apiService";
-import { Collector, Groups, ProductLoans } from "../services/interfaces";
+import { Collector, Groups, ProductLoans, SnackbarAlert } from "../services/interfaces";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
@@ -13,6 +13,8 @@ const MemberRegistration = () => {
 
   const navigate = useNavigate();
   const { groupId } = useParams();
+  const [snackOpen, setSnackOpen] = useState(false);
+  const [alert, setAlert] = useState<SnackbarAlert>();
   const [step, setStep] = useState(1);
   const [productLoans, setProductLoans] = useState<ProductLoans[]>([]);
   const [collectors, setCollectors] = useState<Collector[]>([]);
@@ -63,7 +65,7 @@ const MemberRegistration = () => {
     const response = await getProductLoans();
     setProductLoans(response)
   }
-  
+
   const getGroupDetails = async () => {
     const response = await getGroupById(groupId || "");
     setGroup(response)
@@ -79,18 +81,24 @@ const MemberRegistration = () => {
     e.preventDefault();
     setLoading(true)
     try {
+      if (disableBlockDates(formValues.firstPaymentDate)) {
+        setAlert({ success: false, message: "Invalid First Payment Date" })
+        return
+      }
       formValues.firstPaymentDate = dayjs(formValues.firstPaymentDate).format('YYYY-MM-DD')
       formValues.bdate = dayjs(formValues.bdate).format('YYYY-MM-DD')
       const response: any = await registerMember(formValues)
       if (response.status === 200) {
+        setAlert({ success: true, message: "Registration successful!" })
         navigate(`/home/members/${groupId}`)
       } else {
-        alert('Failed to register. Please try again later.')
+        setAlert({ success: false, message: "Failed to register. Please try again later." })
       }
     } catch (error) {
       console.log(error)
-      alert('Failed to register. Please try again later.')
+      setAlert({ success: false, message: "Failed to register. Please try again later." })
     } finally {
+      setSnackOpen(true)
       setLoading(false)
     }
   };
@@ -369,6 +377,7 @@ const MemberRegistration = () => {
                 name="cycle"
                 required
                 value={formValues.cycle}
+                aria-readonly
                 onChange={handleInputChange}
                 variant="outlined" sx={{ width: "10%", mr: '10px' }} />
 
@@ -384,7 +393,7 @@ const MemberRegistration = () => {
               />
 
               <TextField
-                label="PL"
+                label="Loan Term"
                 variant="outlined"
                 select
                 required
@@ -403,7 +412,7 @@ const MemberRegistration = () => {
 
 
               <TextField
-                label="Interest"
+                label="Interest Rate (%)"
                 type="number"
                 value={formValues.interestRate}
                 aria-readonly
@@ -666,13 +675,26 @@ const MemberRegistration = () => {
               >
                 Back
               </Button>
-              <Button variant="contained" color="primary" type="submit">
+              <Button variant="contained" color="primary" type="submit" disabled={loading}
+                startIcon={loading ? <CircularProgress size={20} /> : null}>
                 Save
               </Button>
             </Box>
           </form>
         </>
       )}
+
+      <Snackbar
+        open={snackOpen}
+        autoHideDuration={10000}
+        onClose={() => setSnackOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert onClose={() => setSnackOpen(false)} severity={alert?.success ? "success" : "error"} sx={{ width: '100%' }}>
+          {alert?.message}
+        </Alert>
+      </Snackbar>
+
     </Box>
   );
 };

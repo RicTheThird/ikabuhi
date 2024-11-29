@@ -72,6 +72,10 @@ const EPayment = () => {
     e.preventDefault();
     setLoading(true)
     try {
+      if (disableNonPaymentDates(formValues.paymentDate)) {
+        setAlert({ success: false, message: "Invalid date selected." })
+        return;
+      }
       formValues.paymentDate = dayjs(formValues.paymentDate).format('YYYY-MM-DD')
       const response: any = await postPayment(formValues)
       if (response.status === 202) {
@@ -154,7 +158,7 @@ const EPayment = () => {
         <Typography variant="body1" fontWeight="bold">
           Current Loan Balance:{" "}
           <Typography variant="body1" component="span">
-            ₱{myDetails?.memberLoans.find((m: any) => m.isActive === true)?.loanBalance.toFixed(2) ?? 0.00}
+            ₱{myDetails?.memberLoans.find((m: any) => m.isActive === true && m.status === 'Approved')?.loanBalance.toFixed(2) ?? 0.00}
           </Typography>
         </Typography>
         {/* <Typography variant="body1" fontWeight="bold">
@@ -183,7 +187,7 @@ const EPayment = () => {
           onChange={handleInputChange}
         />
         <Box sx={{ width: "100%", marginBottom: 2 }}>
-          <Typography variant="caption">Weekly Payment: ₱{myDetails?.memberLoans?.find((m: any) => m.isActive === true)?.weeklyPayment.toFixed(2) ?? 0.00}</Typography>
+          <Typography variant="caption">Weekly Payment: ₱{myDetails?.memberLoans?.find((m: any) => m.isActive === true && m.status === 'Approved')?.weeklyPayment.toFixed(2) ?? 0.00}</Typography>
         </Box>
 
         <TextField

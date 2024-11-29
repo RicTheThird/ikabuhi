@@ -107,7 +107,7 @@ const Home = () => {
         <Box sx={{ padding: "10px" }}>
           <Typography variant="h6">Your Loan Balance</Typography>
           <Typography variant="h5" fontWeight="bold">
-            ₱ {myDetails?.memberLoans.find((m: any) => m.isActive === true)?.loanBalance.toFixed(2) ?? 0.00}
+            ₱ {myDetails?.memberLoans.find((m: any) => m.isActive === true && m.status === 'Approved')?.loanBalance.toFixed(2) ?? 0.00}
           </Typography>
         </Box>
       </Box>
@@ -260,6 +260,7 @@ const Home = () => {
               justifyContent: "center",
               height: 90,
             }}
+            onClick={() => navigate('/insurance')}
           >
             <SavingsIcon sx={{ fontSize: 40, color: "#ff8c00" }} />
             <Typography variant="button" display="block" mt={1}>
@@ -278,6 +279,7 @@ const Home = () => {
               justifyContent: "center",
               height: 90,
             }}
+            onClick={() => navigate('/social-services')}
           >
             <FamilyRestroomIcon sx={{ fontSize: 40, color: "#ff8c00" }} />
             <Typography variant="button" display="block" mt={1}>

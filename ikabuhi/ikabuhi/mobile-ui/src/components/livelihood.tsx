@@ -15,6 +15,9 @@ import {
     CircularProgress,
     Alert,
     Snackbar,
+    FormControl,
+    InputLabel,
+    Select,
     Dialog,
     DialogActions,
     DialogContent,
@@ -23,63 +26,78 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
-import { Member, SnackbarAlert } from "../services/interfaces";
-import { getMyDetails, postBizLoan } from "../services/apiService";
+import { Member, ProductLoans, SnackbarAlert } from "../services/interfaces";
+import { getMyDetails, getProductLoans, postMemberLoan, postSocialService } from "../services/apiService";
 import dayjs from "dayjs";
 
-
 const defaultFormValues = {
-    businessName: '',
-    businessType: '',
-    businessAddress: '',
-    loanAmount: undefined,
-    annualRevenue: undefined,
-    estMonthlyExpenses: undefined,
-    purposeLoan: '',
-    paymentTerms: ''
+    livOwnABusiness: undefined,
+    livBizName: '',
+    livBizType: '',
+    livNoOfEmployee: undefined,
+    livYearsOperated: undefined,
+    livTypeOfBizToStart: '',
+    livInterestReason: '',
+    livSkillsGain: '',
+    livHavePriorTraining: undefined,
+    livPriorTraining: '',
+    livKnowledgePlan: '',
+    livRequireFinanceSupport: undefined,
+    livSupportType: '',
+    schLastName: '',
+    schFirstName: '',
+    schMidName: '',
+    schGender: '',
+    schContact: '',
+    schAddress: '',
+    schGuardianName: '',
+    schRelationGuardian: '',
+    schGuardianAddress: '',
+    schLevelStudy: '',
+    schSchoolName: '',
+    schYearLevel: '',
+    schGrade: '',
+    schReason: '',
+    schHelpReason: '',
+    schContainRecommendation: '',
+    schRecommendationFileName: '',
+    hltBoolExistCondition: undefined,
+    hltExistCondition: '',
+    hltBoolMedication: undefined,
+    hltMedication: '',
+    hltBoolAllergies: undefined,
+    hltAllergies: '',
+    hltBoolHealthCare: undefined,
+    hltHealthCare: '',
+    hltReasonApply: '',
+    hltSupport: '',
+    hltEmergencyContact: '',
+    hltRelationship: '',
+    hltContact: '',
+    hltBoolInsurance: undefined,
+    hltInsurance: '',
+    isActive: undefined,
+    status: 'Pending',
+    type: 'Livelihood'
 };
 
-const BizLoanApplication: React.FC = () => {
+const LivelihoodApplication: React.FC = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1)
-    const [myDetails, setMyDetails] = useState<Member>();
-
     const [open, setOpen] = useState(false);
+    const [myDetails, setMyDetails] = useState<Member>();
+    const [productLoans, setProductLoans] = useState<ProductLoans[]>([]);
     const [loading, setLoading] = useState(false); // Loading state
     const [snackOpen, setSnackOpen] = useState(false);
     const [alert, setAlert] = useState<SnackbarAlert>();
     const [formValues, setFormValues] = useState(defaultFormValues);
 
     useEffect(() => {
-        getMyDetailsAsync()
+        getProductLoansAsync();
+        getMyDetailsAsync();
     }, []);
 
-    const handleClose = () => {
-        setOpen(false)
-        navigate('/loan-select')
-    }
 
-    const getMyDetailsAsync = async () => {
-        const response: Member = await getMyDetails();
-        setMyDetails(response)
-        if (response.payments && response.payments.length > 0) {
-            const cscore = response.payments.reduce((acc, curr) => acc + curr.creditPointsGained, 0);
-            if (cscore < 200) {
-                setOpen(true)
-            }
-        }
-        else
-            setOpen(true)
-    }
-
-    const handleNext = () => {
-        setStep(step + 1);
-        console.log(formValues)
-    };
-
-    const handleBack = () => {
-        setStep(step - 1);
-    };
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         console.log(e.target.type)
         setFormValues({
@@ -88,16 +106,47 @@ const BizLoanApplication: React.FC = () => {
         });
     }
 
+    const handleClose = () => {
+        setOpen(false)
+        navigate('/social-services')
+    }
 
+    const getProductLoansAsync = async () => {
+        const response = await getProductLoans();
+        setProductLoans(response)
+    }
+
+    const getMyDetailsAsync = async () => {
+        const response : Member = await getMyDetails();
+        setMyDetails(response)
+        if (response.payments && response.payments.length > 0) {
+            const cscore = response.payments.reduce((acc, curr) => acc + curr.creditPointsGained, 0);
+            if (cscore < 210) {
+                setOpen(true)
+            }
+        }
+        else
+            setOpen(true)
+
+    }
+
+    const handleNext = () => {
+        console.log(formValues)
+        setStep(step + 1);
+    };
+
+    const handleBack = () => {
+        setStep(step - 1);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         console.log(formValues)
         setLoading(true)
         try {
-            const response: any = await postBizLoan(formValues)
+            const response: any = await postSocialService(formValues)
             if (response.status === 200) {
-                setAlert({ success: true, message: "Loan application submitted. Approval may take 2-3 business days" });
+                setAlert({ success: true, message: "Application submitted. Approval may take 2-3 business days" });
                 setFormValues(defaultFormValues);
                 setStep(1)
             } else {
@@ -111,6 +160,7 @@ const BizLoanApplication: React.FC = () => {
             setLoading(false)
         }
     };
+
 
     return (
         <Box
@@ -134,17 +184,15 @@ const BizLoanApplication: React.FC = () => {
             >
                 <IconButton
                     sx={{ color: "#fff", mb: 1 }}
-                    onClick={() => navigate('/loan-select')}>
+                    onClick={() => navigate('/social-services')}>
 
                     <ArrowBackIcon />
                 </IconButton>
                 <Typography variant="h5" sx={{ fontWeight: "bold", color: "#ff8c00" }}>
-                    Small Business Loan
+                    Livelihood Training Program
                 </Typography>
                 <Typography variant="body2">
-                    This Loan Application form must be fully completed. Failure to
-                    disclose all required information may delay approval of your loan
-                    application.
+                    IKABUHI PROGRAM Social Services Application
                 </Typography>
             </Box>
 
@@ -189,7 +237,6 @@ const BizLoanApplication: React.FC = () => {
                     <>
                         <form onSubmit={handleNext}>
                             <Card sx={{ mb: 2, borderRadius: 2, overflow: "hidden" }}>
-
                                 <CardContent>
                                     <Typography
                                         variant="h6"
@@ -230,7 +277,7 @@ const BizLoanApplication: React.FC = () => {
                                     {/* Confirmation Checkbox */}
                                     <FormControlLabel
                                         required
-                                        control={<Checkbox sx={{ color: "#FF6F00" }} />}
+                                        control={<Checkbox sx={{ color: "#FF6F00" }} required />}
                                         label={
                                             <Typography variant="body2">
                                                 Check this if your information is accurate above to proceed
@@ -263,97 +310,108 @@ const BizLoanApplication: React.FC = () => {
                         <form onSubmit={handleNext}>
                             <Card sx={{ mb: 2, borderRadius: 2, overflow: "hidden" }}>
                                 <CardContent>
-                                    <Typography
-                                        variant="h6"
-                                        sx={{ fontWeight: "bold", mb: 1, color: "#002D72" }}
-                                    >
-                                        II. BUSINESS INFORMATION DETAILS
+                                    <Typography variant="h6" gutterBottom>
+                                        II. BUSINESS INFORMATION
                                     </Typography>
-                                    <Divider sx={{ mb: 2 }} />
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={12}>
-                                            <TextField label="Business Name"
+
+                                    <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                                        <TextField
+                                            variant="outlined"
+                                            required
+                                            select
+                                            value={formValues.livOwnABusiness}
+                                            name="livOwnABusiness"
+                                            onChange={handleInputChange}
+                                            label="Do you Currently own a Business?">
+                                            <MenuItem value={"true"}>Yes</MenuItem>
+                                            <MenuItem value={"false"}>No</MenuItem>
+                                        </TextField>
+                                    </FormControl>
+
+                                    <Grid container spacing={2} sx={{ mb: 2 }}>
+                                        <Grid item xs={12} sm={6}>
+                                            <TextField fullWidth label="Business Name"
                                                 required
-                                                name="businessName"
+                                                value={formValues.livBizName}
+                                                name="livBizName"
                                                 onChange={handleInputChange}
-                                                value={formValues.businessName}
-                                                fullWidth variant="outlined" />
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <TextField
-                                                label="Business Type"
-                                                fullWidth
-                                                variant="outlined"
-                                                select
-                                                required
-                                                value={formValues.businessType}
-                                                name="businessType"
-                                                onChange={handleInputChange}
-                                            >
-                                                <MenuItem value={"Retail"}>Retail</MenuItem>
-                                                <MenuItem value={"Service"}>Service</MenuItem>
-                                                <MenuItem value={"Manufacturing"}>Manufacturing</MenuItem>
-                                            </TextField>
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <TextField label="Business Address"
-                                                required
-                                                value={formValues.businessAddress}
-                                                name="businessAddress"
-                                                onChange={handleInputChange}
-                                                fullWidth
                                                 variant="outlined" />
                                         </Grid>
-                                        <Grid item xs={12}>
-                                            <Typography variant="h6" sx={{ fontWeight: "bold", color: "#002D72" }}>
-                                                Loan Request Detail
-                                            </Typography>
+                                        <Grid item xs={12} sm={6}>
+                                            <TextField fullWidth label="Type of Business"
+                                                required
+                                                value={formValues.livBizType}
+                                                name="livBizType"
+                                                onChange={handleInputChange}
+                                                variant="outlined" />
                                         </Grid>
-                                        <Grid item xs={6}>
-                                            <TextField label="Loan Amount Requested"
+                                        <Grid item xs={12} sm={6}>
+                                            <TextField fullWidth label="No. of Employee"
                                                 required
                                                 type="number"
-                                                value={formValues.loanAmount}
-                                                name="loanAmount"
+                                                value={formValues.livNoOfEmployee}
+                                                name="livNoOfEmployee"
                                                 onChange={handleInputChange}
-                                                fullWidth
                                                 variant="outlined" />
                                         </Grid>
-                                        <Grid item xs={6}>
-                                            <TextField
-                                                label="Repayment Term"
-                                                fullWidth
-                                                variant="outlined"
-                                                select
+                                        <Grid item xs={12} sm={6}>
+                                            <TextField fullWidth label="Years In Operation"
                                                 required
-                                                value={formValues.paymentTerms}
-                                                name="paymentTerms"
+                                                type="number"
+                                                value={formValues.livYearsOperated}
+                                                name="livYearsOperated"
                                                 onChange={handleInputChange}
-                                            >
-                                                <MenuItem value={"6 months"}>6 Months</MenuItem>
-                                                <MenuItem value={"12 months"}>12 Months</MenuItem>
-                                                <MenuItem value={"24 months"}>24 Months</MenuItem>
-                                            </TextField>
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <TextField
-                                                label="Purpose of Loan"
-                                                fullWidth
-                                                variant="outlined"
-                                                select
-                                                required
-                                                value={formValues.purposeLoan}
-                                                name="purposeLoan"
-                                                onChange={handleInputChange}
-                                            >
-                                                <MenuItem value={"Expansion"}>Expansion</MenuItem>
-                                                <MenuItem value={"Inventory"}>Inventory</MenuItem>
-                                                <MenuItem value={"Equipment"}>Equipment</MenuItem>
-                                            </TextField>
+                                                variant="outlined" />
                                         </Grid>
                                     </Grid>
+
+                                    <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                                        <TextField
+                                            select
+                                            required
+                                            value={formValues.livTypeOfBizToStart}
+                                            name="livTypeOfBizToStart"
+                                            onChange={handleInputChange}
+                                            label="If you do not own a business, what type of business would you like to start?">
+                                            <MenuItem value="retail">Retail</MenuItem>
+                                            <MenuItem value="service">Service</MenuItem>
+                                            <MenuItem value="manufacturing">Manufacturing</MenuItem>
+                                            <MenuItem value="other">Other</MenuItem>
+                                        </TextField>
+                                    </FormControl>
+
+                                    <Typography variant="subtitle1" gutterBottom>
+                                        Training Goals
+                                    </Typography>
+
+                                    <TextField
+                                        fullWidth
+                                        label="Why are you interested in this livelihood training program?"
+                                        multiline
+                                        rows={3}
+                                        variant="outlined"
+                                        required
+                                        value={formValues.livInterestReason}
+                                        name="livInterestReason"
+                                        onChange={handleInputChange}
+                                        sx={{ mb: 2 }}
+                                    />
+
+                                    <TextField
+                                        fullWidth
+                                        label="What skills or knowledge do you hope to gain from this program?"
+                                        multiline
+                                        required
+                                        value={formValues.livSkillsGain}
+                                        name="livSkillsGain"
+                                        onChange={handleInputChange}
+                                        rows={3}
+                                        variant="outlined"
+                                        sx={{ mb: 2 }}
+                                    />
                                 </CardContent>
                             </Card>
+
                             <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
                                 <Button
                                     variant="contained"
@@ -392,47 +450,85 @@ const BizLoanApplication: React.FC = () => {
                         <form onSubmit={handleSubmit}>
                             <Card sx={{ mb: 2, borderRadius: 2, overflow: "hidden" }}>
                                 <CardContent>
-                                    <Typography
-                                        variant="h6"
-                                        sx={{ fontWeight: "bold", mb: 1, color: "#002D72" }}
-                                    >
-                                        III. FINANCIAL OBLIGATIONS
+                                    <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+                                        III. PROGRAM EXPECTATION AND SUPPORT
                                     </Typography>
-                                    <Divider sx={{ mb: 2 }} />
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={12}>
-                                            <TextField label="Current Annual Revenue"
-                                                required
-                                                type="number"
-                                                value={formValues.annualRevenue}
-                                                name="annualRevenue"
-                                                onChange={handleInputChange}
-                                                fullWidth variant="outlined" />
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <TextField label="Estimated Monthly Expenses"
-                                                required
-                                                type="number"
-                                                value={formValues.estMonthlyExpenses}
-                                                name="estMonthlyExpenses"
-                                                onChange={handleInputChange}
-                                                fullWidth variant="outlined" />
-                                        </Grid>
-                                    </Grid>
-                                    <Box sx={{ mt: 2 }}>
-                                        <FormControlLabel
+
+                                    <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                                        <TextField
+                                            select
                                             required
-                                            control={<Checkbox sx={{ color: "#FF6F00" }} />}
-                                            label={
-                                                <Typography variant="body2">
-                                                    I, {myDetails?.firstName} {myDetails?.lastName}, declare that all the information provided in
-                                                    this application is true and complete to the best of my
-                                                    knowledge. I understand that any misrepresentation or false
-                                                    information may result in the denial of this loan application.
-                                                </Typography>
-                                            }
-                                        />
-                                    </Box>
+                                            value={formValues.livHavePriorTraining}
+                                            name="livHavePriorTraining"
+                                            onChange={handleInputChange}
+                                            label="Do you have any prior training or experience related to the type of business you're interested in?">
+                                            <MenuItem value={"true"}>Yes</MenuItem>
+                                            <MenuItem value={"false"}>No</MenuItem>
+                                        </TextField>
+                                    </FormControl>
+
+                                    <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                                        <TextField
+                                            label="If Yes, please specify"
+                                            required
+                                            value={formValues.livPriorTraining}
+                                            name="livPriorTraining"
+                                            onChange={handleInputChange}>
+                                            <MenuItem value="training">Training</MenuItem>
+                                            <MenuItem value="experience">Experience</MenuItem>
+                                        </TextField>
+                                    </FormControl>
+
+                                    <TextField
+                                        required
+                                        value={formValues.livKnowledgePlan}
+                                        name="livKnowledgePlan"
+                                        onChange={handleInputChange}
+                                        fullWidth
+                                        label="How do you plan to apply the knowledge and skills gained from the training?"
+                                        multiline
+                                        rows={3}
+                                        variant="outlined"
+                                        sx={{ mb: 2 }}
+                                    />
+
+                                    <Typography variant="subtitle1" gutterBottom>
+                                        Financial Support
+                                    </Typography>
+
+                                    <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                                        <TextField
+                                            select
+                                            required
+                                            value={formValues.livRequireFinanceSupport}
+                                            name="livRequireFinanceSupport"
+                                            onChange={handleInputChange}
+                                            label="Will you require financial support to start or grow your business after the training?">
+                                            <MenuItem value="true">Yes</MenuItem>
+                                            <MenuItem value="false">No</MenuItem>
+                                        </TextField>
+                                    </FormControl>
+
+                                    <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                                        <TextField
+                                            select
+                                            required
+                                            value={formValues.livSupportType}
+                                            name="livSupportType"
+                                            onChange={handleInputChange}
+                                            label="If Yes, what type of support are you looking for?">
+                                            <MenuItem value="loan">Loan</MenuItem>
+                                            <MenuItem value="grant">Grant</MenuItem>
+                                            <MenuItem value="mentorship">Mentorship</MenuItem>
+                                        </TextField>
+                                    </FormControl>
+
+                                    <FormControlLabel
+                                        required
+                                        control={<Checkbox />}
+                                        label="I hereby declare that the information provided is accurate to the best of my knowledge and I agree to the terms and conditions of the microinsurance policy."
+                                        sx={{ mb: 2 }}
+                                    />
                                 </CardContent>
                             </Card>
                             <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
@@ -466,9 +562,11 @@ const BizLoanApplication: React.FC = () => {
                                     Submit
                                 </Button>
                             </Box>
-                        </form></>
+                        </form>
+                    </>
                 )}
             </Box>
+
             <Snackbar
                 open={snackOpen}
                 autoHideDuration={10000}
@@ -493,7 +591,7 @@ const BizLoanApplication: React.FC = () => {
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                    You need at least <b>200 credit points</b> to unlock this priviledge.  You can do it!
+                    You need at least <b>210 credit points</b> to unlock this priviledge.  You can do it!
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
@@ -506,4 +604,4 @@ const BizLoanApplication: React.FC = () => {
     );
 };
 
-export default BizLoanApplication;
+export default LivelihoodApplication;

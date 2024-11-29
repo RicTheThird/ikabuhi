@@ -23,10 +23,14 @@ namespace Ikabuhi.Backend.Models
         public string? GuarantorRelation { get; set; }
         public string? SourceOfIncome { get; set; }
         public string? Status { get; set; } // Approve, Decline, Pending
-        public DateTime DueDate { get; set; }
+        public DateTime? DueDate { get; set; }
         public decimal LoanBalance { get; set; }
-        public DateTime FirstPaymentDate { get; set; }
+        public DateTime? FirstPaymentDate { get; set; }
         public string? LoanType { get; set; }
+        public decimal? LiabilityLoanBalance { get; set; }
+        public decimal? LiabilityLoanBalanceWeeklyPayments { get; set; }
+        public decimal? ExternalSavingsBalance { get; set; }
+        public decimal? MonthlyExpenses { get; set; }
 
         [ForeignKey("MemberId")]
         public virtual Member? Member { get; set; }

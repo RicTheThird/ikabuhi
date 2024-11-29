@@ -15,6 +15,13 @@ import LoanSelection from './components/loan-selection';
 import RegularLoanApplication from './components/regular-loan-application';
 import BizLoanApplication from './components/biz-loan-application';
 import WashLoanApplication from './components/wash-loan-application';
+import LivelihoodApplication from './components/livelihood';
+import ScholarshipApplication from './components/scholarship';
+import HealthApplication from './components/health';
+import SSSelection from './components/social-services';
+import MicroInsuranceApplication from './components/micro-insurance';
+import LoanInsuranceApplication from './components/loan-insurance';
+import InsuranceSelection from './components/insurance-selection';
 
 const App: React.FC = () => {
   return (
@@ -32,6 +39,13 @@ const App: React.FC = () => {
         <Route path="/regular-loan" element={<RegularLoanApplication />} />
         <Route path="/biz-loan" element={<BizLoanApplication />} />
         <Route path="/wash-loan" element={<WashLoanApplication />} />
+        <Route path="/livelihood" element={<LivelihoodApplication />} />
+        <Route path="/scholarship" element={<ScholarshipApplication />} />
+        <Route path="/health" element={<HealthApplication />} />
+        <Route path="/social-services" element={<SSSelection />} />
+        <Route path="/micro-insurance" element={<MicroInsuranceApplication />} />
+        <Route path="/loan-insurance" element={<LoanInsuranceApplication />} />
+        <Route path="/insurance" element={<InsuranceSelection />} />
       </Routes>
     </Router>
   );

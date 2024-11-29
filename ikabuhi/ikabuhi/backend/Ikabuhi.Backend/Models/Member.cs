@@ -32,5 +32,9 @@ namespace Ikabuhi.Backend.Models
         public ICollection<Transaction>? Transactions { get; set; }
         public ICollection<MemberWithdrawal>? MemberWithdrawals { get; set; }
         public ICollection<Payments>? Payments { get; set; }
+
+        public ICollection<WashLoan>? WashLoans { get; set; }
+        public ICollection<BusinessLoan>? BusinessLoans { get; set; }
+        public ICollection<SocialService>? SocialServices { get; set; }
     }
 }

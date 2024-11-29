@@ -62,7 +62,7 @@ const MembersList: React.FC = () => {
                 },
               }}
             >
-              <CardContent>
+              <CardContent onClick={() => navigate(`/home/member-info/${member?.id}`)}>
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                   {member.firstName} {member.lastName}
                 </Typography>

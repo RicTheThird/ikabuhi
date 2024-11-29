@@ -15,6 +15,9 @@ import {
     CircularProgress,
     Alert,
     Snackbar,
+    FormControl,
+    InputLabel,
+    Select,
     Dialog,
     DialogActions,
     DialogContent,
@@ -23,48 +26,156 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
-import { Member, SnackbarAlert } from "../services/interfaces";
-import { getMyDetails, postBizLoan } from "../services/apiService";
+import { Member, ProductLoans, SnackbarAlert } from "../services/interfaces";
+import { getMyDetails, getProductLoans, postMemberLoan } from "../services/apiService";
 import dayjs from "dayjs";
 
-
 const defaultFormValues = {
-    businessName: '',
-    businessType: '',
-    businessAddress: '',
-    loanAmount: undefined,
-    annualRevenue: undefined,
-    estMonthlyExpenses: undefined,
-    purposeLoan: '',
-    paymentTerms: ''
+    groupId: "",
+    lastName: "",
+    firstName: "",
+    middleName: "",
+    accountNo: "",
+    bdate: dayjs().format('YYYY-MM-DD'),
+    civilStatus: "",
+    occupation: "",
+    brgy: "",
+    municipality: "",
+    province: "",
+    userName: "",
+    password: "",
+    billsFile: null,
+    idFile: null,
+    photoFile: null,
+    cycle: 1,
+    loanAmount: 0,
+    totalLoanAmount: 0,
+    weeklyPayment: 0,
+    interestRate: 0,
+    transaction: 0,
+    collectorId: "",
+    currentSavings: 0,
+    loanId: "",
+    guarantorName: "",
+    guarantorRelation: "",
+    sourceOfIncome: "",
+    firstPaymentDate: dayjs().format('YYYY-MM-DD'),
+    collateralType1: "",
+    collateralTypeAmount1: 0,
+    collateralType2: "",
+    collateralTypeAmount2: 0,
+    collateralType3: "",
+    collateralTypeAmount3: 0,
+    liabilityLoanBalance: 0,
+    liabilityLoanBalanceWeeklyPayments: 0,
+    externalSavingsBalance: 0,
+    monthlyExpenses: 0
 };
 
-const BizLoanApplication: React.FC = () => {
+const MicroInsuranceApplication: React.FC = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1)
-    const [myDetails, setMyDetails] = useState<Member>();
-
     const [open, setOpen] = useState(false);
+    const [myDetails, setMyDetails] = useState<Member>();
+    const [productLoans, setProductLoans] = useState<ProductLoans[]>([]);
     const [loading, setLoading] = useState(false); // Loading state
     const [snackOpen, setSnackOpen] = useState(false);
     const [alert, setAlert] = useState<SnackbarAlert>();
     const [formValues, setFormValues] = useState(defaultFormValues);
 
     useEffect(() => {
-        getMyDetailsAsync()
+        getProductLoansAsync();
+        getMyDetailsAsync();
     }, []);
 
     const handleClose = () => {
         setOpen(false)
-        navigate('/loan-select')
+        navigate('/insurance')
+    }
+
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        console.log(e.target.name)
+        if (e.target.name === 'loanId') {
+            const loanDetails = productLoans.find(p => p.id === e.target.value)
+            if (loanDetails) {
+                let totalLoanAmount = 0
+                let weeklyPayment = 0
+                if (formValues.loanAmount) {
+                    totalLoanAmount = Number(formValues.loanAmount * (loanDetails.interestRate / 100)) + Number(formValues.loanAmount)
+                    weeklyPayment = totalLoanAmount / loanDetails.transactions
+                }
+                setFormValues({
+                    ...formValues,
+                    [e.target.name]: e.target.value,
+                    totalLoanAmount,
+                    interestRate: loanDetails.interestRate,
+                    transaction: loanDetails.transactions,
+                    weeklyPayment
+                });
+            }
+        }
+        else if (e.target.name === 'loanAmount') {
+            if (formValues.loanId) {
+                const loanDetails = productLoans.find(p => p.id === formValues.loanId)
+                if (loanDetails) {
+                    const loanAmount = Number(e.target.value);
+                    let totalLoanAmount = 0
+                    let weeklyPayment = 0
+                    if (loanAmount > 0) {
+                        totalLoanAmount = Number(loanAmount * (loanDetails.interestRate / 100)) + Number(loanAmount)
+                        weeklyPayment = totalLoanAmount / loanDetails.transactions
+                    }
+                    setFormValues({
+                        ...formValues,
+                        loanAmount,
+                        totalLoanAmount,
+                        interestRate: loanDetails.interestRate,
+                        transaction: loanDetails.transactions,
+                        weeklyPayment
+                    });
+                }
+            } else {
+                setFormValues({
+                    ...formValues,
+                    [e.target.name]: Number(e.target.value)
+                });
+            }
+        }
+        else if (e.target.name === 'accountNo') {
+            setFormValues({
+                ...formValues,
+                [e.target.name]: e.target.value,
+                userName: e.target.value
+            });
+        }
+
+        else {
+            setFormValues({
+                ...formValues,
+                [e.target.name]: e.target.value,
+            });
+        }
+    };
+
+    const getProductLoansAsync = async () => {
+        const response = await getProductLoans();
+        setProductLoans(response)
     }
 
     const getMyDetailsAsync = async () => {
-        const response: Member = await getMyDetails();
+        const response = await getMyDetails();
         setMyDetails(response)
-        if (response.payments && response.payments.length > 0) {
-            const cscore = response.payments.reduce((acc, curr) => acc + curr.creditPointsGained, 0);
-            if (cscore < 200) {
+        const typedResponse = response as Member;
+        setFormValues({
+            ...formValues,
+            cycle: typedResponse.memberLoans?.length + 1,
+            groupId: typedResponse.group?.id
+        });
+
+        if (typedResponse.payments && typedResponse.payments.length > 0) {
+            const cscore = typedResponse.payments.reduce((acc, curr) => acc + curr.creditPointsGained, 0);
+            if (cscore < 150) {
                 setOpen(true)
             }
         }
@@ -73,44 +184,40 @@ const BizLoanApplication: React.FC = () => {
     }
 
     const handleNext = () => {
-        setStep(step + 1);
         console.log(formValues)
+        setStep(step + 1);
     };
 
     const handleBack = () => {
         setStep(step - 1);
     };
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        console.log(e.target.type)
-        setFormValues({
-            ...formValues,
-            [e.target.name]: e.target.type === 'number' ? Number(e.target.value) : e.target.value,
-        });
-    }
-
-
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         console.log(formValues)
-        setLoading(true)
-        try {
-            const response: any = await postBizLoan(formValues)
-            if (response.status === 200) {
-                setAlert({ success: true, message: "Loan application submitted. Approval may take 2-3 business days" });
-                setFormValues(defaultFormValues);
-                setStep(1)
-            } else {
-                setAlert({ success: false, message: response.response.data })
-            }
-        } catch (error) {
-            console.log(error)
-            setAlert({ success: false, message: "Request failed. Please try again later." })
-        } finally {
-            setSnackOpen(true)
-            setLoading(false)
-        }
+
+        setAlert({ success: true, message: "Application submitted. Approval may take 2-3 business days" });
+        setStep(1)
+        
+        // setLoading(true)
+        // try {
+        //     const response: any = await postMemberLoan(formValues)
+        //     if (response.status === 200) {
+        //         setAlert({ success: true, message: "Loan application submitted. Approval may take 2-3 business days" });
+        //         setFormValues(defaultFormValues);
+        //         setStep(1)
+        //     } else {
+        //         setAlert({ success: false, message: response.response.data })
+        //     }
+        // } catch (error) {
+        //     console.log(error)
+        //     setAlert({ success: false, message: "Request failed. Please try again later." })
+        // } finally {
+        //     setSnackOpen(true)
+        //     setLoading(false)
+        // }
     };
+
 
     return (
         <Box
@@ -134,17 +241,15 @@ const BizLoanApplication: React.FC = () => {
             >
                 <IconButton
                     sx={{ color: "#fff", mb: 1 }}
-                    onClick={() => navigate('/loan-select')}>
+                    onClick={() => navigate('/insurance')}>
 
                     <ArrowBackIcon />
                 </IconButton>
                 <Typography variant="h5" sx={{ fontWeight: "bold", color: "#ff8c00" }}>
-                    Small Business Loan
+                    Micro Insurance
                 </Typography>
                 <Typography variant="body2">
-                    This Loan Application form must be fully completed. Failure to
-                    disclose all required information may delay approval of your loan
-                    application.
+                    IKABUHI Insurance Application
                 </Typography>
             </Box>
 
@@ -189,7 +294,6 @@ const BizLoanApplication: React.FC = () => {
                     <>
                         <form onSubmit={handleNext}>
                             <Card sx={{ mb: 2, borderRadius: 2, overflow: "hidden" }}>
-
                                 <CardContent>
                                     <Typography
                                         variant="h6"
@@ -229,8 +333,7 @@ const BizLoanApplication: React.FC = () => {
 
                                     {/* Confirmation Checkbox */}
                                     <FormControlLabel
-                                        required
-                                        control={<Checkbox sx={{ color: "#FF6F00" }} />}
+                                        control={<Checkbox sx={{ color: "#FF6F00" }} required />}
                                         label={
                                             <Typography variant="body2">
                                                 Check this if your information is accurate above to proceed
@@ -263,97 +366,29 @@ const BizLoanApplication: React.FC = () => {
                         <form onSubmit={handleNext}>
                             <Card sx={{ mb: 2, borderRadius: 2, overflow: "hidden" }}>
                                 <CardContent>
-                                    <Typography
-                                        variant="h6"
-                                        sx={{ fontWeight: "bold", mb: 1, color: "#002D72" }}
-                                    >
-                                        II. BUSINESS INFORMATION DETAILS
+                                    <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+                                        II. BENEFICIARY INFORMATION
                                     </Typography>
-                                    <Divider sx={{ mb: 2 }} />
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={12}>
-                                            <TextField label="Business Name"
-                                                required
-                                                name="businessName"
-                                                onChange={handleInputChange}
-                                                value={formValues.businessName}
-                                                fullWidth variant="outlined" />
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <TextField
-                                                label="Business Type"
-                                                fullWidth
-                                                variant="outlined"
-                                                select
-                                                required
-                                                value={formValues.businessType}
-                                                name="businessType"
-                                                onChange={handleInputChange}
-                                            >
-                                                <MenuItem value={"Retail"}>Retail</MenuItem>
-                                                <MenuItem value={"Service"}>Service</MenuItem>
-                                                <MenuItem value={"Manufacturing"}>Manufacturing</MenuItem>
-                                            </TextField>
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <TextField label="Business Address"
-                                                required
-                                                value={formValues.businessAddress}
-                                                name="businessAddress"
-                                                onChange={handleInputChange}
-                                                fullWidth
-                                                variant="outlined" />
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <Typography variant="h6" sx={{ fontWeight: "bold", color: "#002D72" }}>
-                                                Loan Request Detail
-                                            </Typography>
-                                        </Grid>
-                                        <Grid item xs={6}>
-                                            <TextField label="Loan Amount Requested"
-                                                required
-                                                type="number"
-                                                value={formValues.loanAmount}
-                                                name="loanAmount"
-                                                onChange={handleInputChange}
-                                                fullWidth
-                                                variant="outlined" />
-                                        </Grid>
-                                        <Grid item xs={6}>
-                                            <TextField
-                                                label="Repayment Term"
-                                                fullWidth
-                                                variant="outlined"
-                                                select
-                                                required
-                                                value={formValues.paymentTerms}
-                                                name="paymentTerms"
-                                                onChange={handleInputChange}
-                                            >
-                                                <MenuItem value={"6 months"}>6 Months</MenuItem>
-                                                <MenuItem value={"12 months"}>12 Months</MenuItem>
-                                                <MenuItem value={"24 months"}>24 Months</MenuItem>
-                                            </TextField>
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <TextField
-                                                label="Purpose of Loan"
-                                                fullWidth
-                                                variant="outlined"
-                                                select
-                                                required
-                                                value={formValues.purposeLoan}
-                                                name="purposeLoan"
-                                                onChange={handleInputChange}
-                                            >
-                                                <MenuItem value={"Expansion"}>Expansion</MenuItem>
-                                                <MenuItem value={"Inventory"}>Inventory</MenuItem>
-                                                <MenuItem value={"Equipment"}>Equipment</MenuItem>
-                                            </TextField>
-                                        </Grid>
-                                    </Grid>
+
+                                    <Typography variant="subtitle1" gutterBottom>
+                                        BENEFICIARY INFORMATION
+                                    </Typography>
+
+                                    <TextField fullWidth label="Last Name" variant="outlined" sx={{ mb: 2 }} />
+                                    <TextField fullWidth label="First Name" variant="outlined" sx={{ mb: 2 }} />
+                                    <TextField fullWidth label="Middle Name" variant="outlined" sx={{ mb: 2 }} />
+                                    <TextField fullWidth label="Relationship to Beneficiary" variant="outlined" sx={{ mb: 2 }} />
+                                    <TextField fullWidth label="Contact Number" variant="outlined" sx={{ mb: 2 }} />
+
+                                    <Typography variant="subtitle1" gutterBottom>
+                                        INSURANCE COVERAGE
+                                    </Typography>
+
+                                    <TextField fullWidth label="Type of Coverage" variant="outlined" sx={{ mb: 2 }} />
+                                    <TextField fullWidth label="Sum Assured" variant="outlined" sx={{ mb: 2 }} />
                                 </CardContent>
                             </Card>
+
                             <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
                                 <Button
                                     variant="contained"
@@ -392,47 +427,34 @@ const BizLoanApplication: React.FC = () => {
                         <form onSubmit={handleSubmit}>
                             <Card sx={{ mb: 2, borderRadius: 2, overflow: "hidden" }}>
                                 <CardContent>
-                                    <Typography
-                                        variant="h6"
-                                        sx={{ fontWeight: "bold", mb: 1, color: "#002D72" }}
-                                    >
-                                        III. FINANCIAL OBLIGATIONS
+                                    <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+                                        III. PAYMENT PLAN AND METHOD
                                     </Typography>
-                                    <Divider sx={{ mb: 2 }} />
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={12}>
-                                            <TextField label="Current Annual Revenue"
-                                                required
-                                                type="number"
-                                                value={formValues.annualRevenue}
-                                                name="annualRevenue"
-                                                onChange={handleInputChange}
-                                                fullWidth variant="outlined" />
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <TextField label="Estimated Monthly Expenses"
-                                                required
-                                                type="number"
-                                                value={formValues.estMonthlyExpenses}
-                                                name="estMonthlyExpenses"
-                                                onChange={handleInputChange}
-                                                fullWidth variant="outlined" />
-                                        </Grid>
-                                    </Grid>
-                                    <Box sx={{ mt: 2 }}>
-                                        <FormControlLabel
-                                            required
-                                            control={<Checkbox sx={{ color: "#FF6F00" }} />}
-                                            label={
-                                                <Typography variant="body2">
-                                                    I, {myDetails?.firstName} {myDetails?.lastName}, declare that all the information provided in
-                                                    this application is true and complete to the best of my
-                                                    knowledge. I understand that any misrepresentation or false
-                                                    information may result in the denial of this loan application.
-                                                </Typography>
-                                            }
-                                        />
-                                    </Box>
+
+                                    <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                                        <InputLabel>Preferred Payment Frequency</InputLabel>
+                                        <Select label="Preferred Payment Frequency">
+                                            <MenuItem value="monthly">Monthly</MenuItem>
+                                            <MenuItem value="quarterly">Quarterly</MenuItem>
+                                            <MenuItem value="annually">Annually</MenuItem>
+                                        </Select>
+                                    </FormControl>
+
+                                    <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                                        <InputLabel>Payment Method</InputLabel>
+                                        <Select label="Payment Method">
+                                            <MenuItem value="credit_card">Credit Card</MenuItem>
+                                            <MenuItem value="debit_card">Debit Card</MenuItem>
+                                            <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
+                                            <MenuItem value="cash">Cash</MenuItem>
+                                        </Select>
+                                    </FormControl>
+
+                                    <FormControlLabel
+                                        control={<Checkbox />}
+                                        label="I hereby declare that the information provided is accurate to the best of my knowledge and I agree to the terms and conditions of the microinsurance policy."
+                                        sx={{ mb: 2 }}
+                                    />
                                 </CardContent>
                             </Card>
                             <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
@@ -466,9 +488,11 @@ const BizLoanApplication: React.FC = () => {
                                     Submit
                                 </Button>
                             </Box>
-                        </form></>
+                        </form>
+                    </>
                 )}
             </Box>
+
             <Snackbar
                 open={snackOpen}
                 autoHideDuration={10000}
@@ -493,7 +517,7 @@ const BizLoanApplication: React.FC = () => {
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                    You need at least <b>200 credit points</b> to unlock this priviledge.  You can do it!
+                        You need at least <b>150 credit points</b> to unlock this priviledge.  You can do it!
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
@@ -506,4 +530,4 @@ const BizLoanApplication: React.FC = () => {
     );
 };
 
-export default BizLoanApplication;
+export default MicroInsuranceApplication;

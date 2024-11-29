@@ -55,8 +55,8 @@ const TransactionHistory = () => {
         </Typography>
       </Box>
       <Typography variant="body1" sx={{ mb: 2 }}>
-        Your recent borrowed Loan amounting <b>₱{myDetails?.memberLoans.find((m: any) => m.isActive === true)?.loanBalance.toFixed(2) ?? 0.00}</b> 
-        {" "} will process <strong>{myDetails?.memberLoans.find((m: any) => m.isActive === true)?.productLoan?.transactions ?? 0}</strong> transactions
+        Your recent borrowed Loan amounting <b>₱{myDetails?.memberLoans.find((m: any) => m.isActive === true && m.status === 'Approved')?.totalLoanAmount.toFixed(2) ?? 0.00}</b> 
+        {" "} will process <strong>{myDetails?.memberLoans.find((m: any) => m.isActive === true && m.status === 'Approved')?.productLoan?.transactions ?? 0}</strong> transactions
       </Typography>
 
       {/* Transactions List */}
