@@ -22,6 +22,7 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 import { logout } from "../services/authService";
 import { PendingLoanResponse, SocialService, Withdrawal } from "../services/interfaces";
 import { getMemberWithdrawal, getPendingLoanApplications, getPendingSocialServices } from "../services/apiService";
+import { ExitToApp } from "@mui/icons-material";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -80,14 +81,14 @@ const HomePage: React.FC = () => {
 
           {/* Notification and Profile Icons */}
           <Box>
-            <IconButton color="primary">
+            {/* <IconButton color="primary">
               <NotificationsIcon sx={{ color: "#ff6600", fontSize: "40px" }} />
             </IconButton>
             <IconButton color="primary">
               <ChatIcon sx={{ color: "#ff6600", fontSize: "40px" }} />
-            </IconButton>
-            <IconButton color="primary" onClick={handleMenuClick2}>
-              <PersonIcon sx={{ color: "#ff6600", fontSize: "40px" }} />
+            </IconButton> */}
+            <IconButton color="primary" onClick={() => logout()}>
+              <ExitToApp sx={{ color: "#ff6600", fontSize: "40px" }} />
             </IconButton>
 
             {/* Dropdown Menu for Logout */}

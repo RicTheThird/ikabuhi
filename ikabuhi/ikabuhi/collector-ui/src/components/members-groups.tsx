@@ -131,7 +131,7 @@ const MembersGroups: React.FC = () => {
                   >
                     View Members
                   </Button>
-                  <Button
+                  {/* <Button
                     variant="contained"
                     color="success"
                     sx={{ marginRight: "10px", textTransform: 'none' }}
@@ -139,7 +139,7 @@ const MembersGroups: React.FC = () => {
                     onClick={() => navigate("/home/transactions-report")}
                   >
                     Transaction Report
-                  </Button>
+                  </Button> */}
                   <Button
                     variant="contained"
                     color="info"

@@ -20,6 +20,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Badge,
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import { Groups, Payments, SnackbarAlert, Transaction, Withdrawal } from "../services/interfaces";
@@ -232,7 +233,13 @@ const MemberTransactions = () => {
                   <TableCell>{payment.member?.accountNo}</TableCell>
                   <TableCell>{payment.member?.firstName} {payment.member?.lastName}</TableCell>
                   <TableCell>{payment.memberLoan?.productLoan?.name}</TableCell>
-                  <TableCell>{payment.memberLoan?.loanBalance?.toFixed(2) ?? 0}</TableCell>
+                  <TableCell>{payment.memberLoan?.loanBalance?.toFixed(2) ?? 0} {payment.memberLoan?.status === 'Paid' && <Badge
+                    badgeContent="Paid"
+                    color="secondary"
+                    sx={{
+                      marginLeft: "20px"
+                    }} 
+                    />}</TableCell>
                   <TableCell>₱{payment.memberSavings?.runningSavingsAmount.toFixed(2)}</TableCell>
                   {/* <TableCell>{transaction.olb}</TableCell> */}
                   <TableCell>₱{payment.memberLoan?.weeklyPayment.toFixed(2)}</TableCell>
@@ -257,7 +264,7 @@ const MemberTransactions = () => {
                       required
                       value={payment.loanPayment}
                       onChange={(e) => updatePaymentItem(payment.id, "loanPayment", e.target.value)}
-                      //disabled={payment?.paymentMethod !== 'Cash'}
+                      disabled={payment?.memberLoan?.status === 'Paid'}
                       helperText={payment?.paymentStatus && payment?.paymentStatus !== 'Declined' ? `${payment?.paymentStatus} ECash payment` : ''}
                     />
                   </TableCell>

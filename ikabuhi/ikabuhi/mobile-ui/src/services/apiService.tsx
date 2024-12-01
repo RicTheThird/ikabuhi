@@ -114,3 +114,12 @@ export const getCollectorsByGroup = async (groupId: string) => {
 };
 //#endregion
 
+export const getNotifications = async () => {
+    const response = await axiosInstance.get(`/Notifications`);
+    return response.data;
+};
+
+export const readNotification = async (id: string) => {
+    const response = await axiosInstance.put(`/Notifications/read/${id}`);
+    return response;
+};

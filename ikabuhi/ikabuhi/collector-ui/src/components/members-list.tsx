@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Grid, Card, CardContent, Typography, Button } from '@mui/material';
+import { Box, Grid, Card, CardContent, Typography, Button, Avatar } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Groups, Member } from '../services/interfaces';
-import { getGroupById, getGroupMembers } from '../services/apiService';
+import { getGroupById, getGroupMembers, getImageLink } from '../services/apiService';
 import dayjs from 'dayjs';
 
 const MembersList: React.FC = () => {
@@ -18,7 +18,7 @@ const MembersList: React.FC = () => {
   }, []);
 
   const getMembers = async () => {
-    const response = await getGroupMembers(groupId || ""); 
+    const response = await getGroupMembers(groupId || "");
     setMembers(response)
   }
 
@@ -63,6 +63,16 @@ const MembersList: React.FC = () => {
               }}
             >
               <CardContent onClick={() => navigate(`/home/member-info/${member?.id}`)}>
+                <Avatar
+                  alt={`${member.firstName} ${member.lastName}`}
+                  src={getImageLink(member?.photoBlobName ?? '')} // Use default if no avatar URL is available
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    margin: '0 auto 16px', // Center the avatar and add margin
+                  }}
+                />
+
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                   {member.firstName} {member.lastName}
                 </Typography>

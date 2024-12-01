@@ -79,12 +79,65 @@ namespace Ikabuhi.Backend.Controllers
         [HttpPut("loan-status/regular/{id}/{status}")]
         public async Task<IActionResult> PutMemberLoan(Guid id, string status)
         {
-            var loan = await _context.MemberLoans.FindAsync(id);
+            var loan = await _context.MemberLoans
+                .Include(m => m.Member).ThenInclude(m => m.Group).Include(m => m.Member.MemberSavings)
+                .Include(m => m.ProductLoan).Where(m => m.Id == id).FirstOrDefaultAsync();
 
             if (loan == null)
                 return BadRequest("Cannot find loan");
 
             loan.Status = status;
+
+            if (status != "Approved")
+            {
+                var notif = new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    MemberId = loan.MemberId,
+                    Message = "Unfortunately, Your regular loan application was declined. Please contact your collector if you have any questions.",
+                    IsSeen = false,
+                    CreatedAt = DateTime.UtcNow.ToSEATimeFromUtc()
+                };
+                _context.Notifications.Add(notif);
+            }
+            else
+            {
+                var nextPaymentDate = GetNextPaymentDate(DateTime.UtcNow.ToSEATimeFromUtc(), loan.Member.Group.MeetingDay);
+                var notif = new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    MemberId = loan.MemberId,
+                    Message = $"Good news! Your regular loan application was approved. Your first payment date is on {nextPaymentDate.ToShortDateString()}",
+                    IsSeen = false,
+                    CreatedAt = DateTime.UtcNow.ToSEATimeFromUtc()
+                };
+                _context.Notifications.Add(notif);
+
+                var toDeletePayments = await _context.Payments.Where(p => p.MemberId == loan.MemberId).ToListAsync();
+                foreach (var toDelP in toDeletePayments)
+                {
+                    toDelP.Status = "Deleted";
+                }
+
+                var payments = new List<Payments>();
+
+                //Add placeholders for payments
+                for (int i = 0; i < loan.ProductLoan.Transactions; i++)
+                {
+                    payments.Add(new Payments
+                    {
+                        Id = Guid.NewGuid(),
+                        MemberId = loan.MemberId,
+                        LoanId = loan.Id,
+                        SavingsId = loan.Member.MemberSavings.FirstOrDefault().Id,
+                        WeekNumber = GetWeekNumberInMonth(nextPaymentDate.AddDays(7 * i)),
+                        PaymentDate = nextPaymentDate.AddDays(7 * i).Date,
+                        Status = "Pending",
+                    });
+                }
+                _context.Payments.AddRange(payments);
+            }
+
             try
             {
                 await _context.SaveChangesAsync();
@@ -374,6 +427,21 @@ namespace Ikabuhi.Backend.Controllers
         private bool MemberLoanExists(Guid id)
         {
             return _context.MemberLoans.Any(e => e.Id == id);
+        }
+
+        public static DateTime GetNextPaymentDate(DateTime currentDate, int meetingDay)
+        {
+            // Calculate the difference between the current day and the next payment.
+            int daysUntilNextPayment = (((DayOfWeek)meetingDay - currentDate.DayOfWeek) + 7) % 7;
+
+            // If today is payment, we want to get the next payment, not today.
+            if (daysUntilNextPayment == 0)
+            {
+                daysUntilNextPayment = 7;
+            }
+
+            // Add the difference to today's date to get the next payment.
+            return currentDate.AddDays(daysUntilNextPayment);
         }
     }
 

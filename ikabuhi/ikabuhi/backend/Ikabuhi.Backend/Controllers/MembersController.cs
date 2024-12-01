@@ -52,7 +52,6 @@ namespace Ikabuhi.Backend.Controllers
                 .Include(m => m.Transactions.OrderByDescending(s => s.TransactionDate).Take(20))
                 .Include(m => m.Payments.Where(p => p.Status == "Submitted").OrderByDescending(p => p.PaymentDate))
                 .Include(m => m.MemberSavings.OrderByDescending(s => s.LastPaymentDate).Take(1)).FirstOrDefaultAsync();
-
         }
 
         // GET: api/members/group/5
@@ -275,7 +274,7 @@ namespace Ikabuhi.Backend.Controllers
         {
             if (file != null)
             {
-                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "UploadedFiles", $"{memberId}-{file.FileName}");
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", $"{memberId}-{file.FileName}");
 
                 // Create directory if it doesn't exist
                 var directoryPath = Path.GetDirectoryName(filePath);
@@ -291,7 +290,7 @@ namespace Ikabuhi.Backend.Controllers
             }
         }
 
-        private static int GetWeekNumberInMonth(DateTime date)
+        public static int GetWeekNumberInMonth(DateTime date)
         {
             // Get the first day of the month
             DateTime firstDayOfMonth = new DateTime(date.Year, date.Month, 1);

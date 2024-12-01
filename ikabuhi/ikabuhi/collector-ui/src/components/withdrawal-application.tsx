@@ -57,11 +57,11 @@ const WithdrawalApplication = () => {
         setActiveWithdrawal(null);
         getWithdrawalApplications()
       } else {
-        alert('Failed to register. Please try again later.')
+        alert('Request failed. Please try again later.')
       }
     } catch (error) {
       console.log(error)
-      alert('Failed to register. Please try again later.')
+      alert('Request failed. Please try again later.')
     } finally {
       //setLoading(false)
     }

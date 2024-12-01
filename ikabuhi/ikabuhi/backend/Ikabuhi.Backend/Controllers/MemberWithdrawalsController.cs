@@ -97,6 +97,32 @@ namespace Ikabuhi.Backend.Controllers
             if (currentSavings != null)
                 currentSavings.RunningSavingsAmount -= memberWithdrawal.WithdrawAmount;
 
+            if (memberWithdrawal.Status == "Approved")
+            {
+                var notif = new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    MemberId = memberWithdrawal.MemberId,
+                    Message = $"Good news! Your withdrawal application worth {memberWithdrawal.WithdrawAmount} was approved." +
+                    $" Your payment date is on {memberWithdrawal.WithdrawalDateTime.ToShortDateString()}",
+                    IsSeen = false,
+                    CreatedAt = DateTime.UtcNow.ToSEATimeFromUtc()
+                };
+                _context.Notifications.Add(notif);
+            }
+            else
+            {
+                var notif = new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    MemberId = memberWithdrawal.MemberId,
+                    Message = "Unfortunately, Your withdrawal application was declined. Please contact your collector if you have any questions.",
+                    IsSeen = false,
+                    CreatedAt = DateTime.UtcNow.ToSEATimeFromUtc()
+                };
+                _context.Notifications.Add(notif);
+            }
+
             try
             {
                 await _context.SaveChangesAsync();

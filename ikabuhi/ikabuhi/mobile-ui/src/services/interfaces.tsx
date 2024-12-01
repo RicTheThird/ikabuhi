@@ -98,6 +98,15 @@ export interface MemberLoans {
     weeklyPayment: number;
 }
 
+export interface NotificationX {
+    id: string;               // Guid in C# is typically represented as a string in TypeScript (UUID)
+    memberId: string;         // Guid is also a string in TypeScript
+    message?: string | null;  // Nullable string (Message can be a string or null, so it's optional)
+    createdAt?: string | null; // Nullable date (Using string type to represent date/time)
+    isSeen?: boolean | null;  // Nullable boolean
+    member?: Member | null;   // Foreign key relationship with Member, optional and can be null
+}
+
 
 export interface MemberSavings {
     id: string;

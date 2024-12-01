@@ -39,4 +39,26 @@
 		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.2.1" />
 		<PackageReference Include="TimeZoneConverter" Version="6.1.0" />
 	</ItemGroup>
+
+	<Target Name="PostBuildCopy" AfterTargets="Build">
+		<!-- Copy all files in the "Uploads" directory to the output "wwwroot/uploads" directory -->
+		<Copy SourceFiles="@(Content)" DestinationFolder="$(OutDir)wwwroot\uploads\%(RecursiveDir)">
+			<Output TaskParameter="CopiedFiles" ItemName="FilesCopied" />
+		</Copy>
+		<!-- To include a specific folder -->
+		<ItemGroup>
+			<MyFolder Include="uploads\**\*.*" />
+		</ItemGroup>
+		<Copy SourceFiles="@(MyFolder)" DestinationFolder="$(OutDir)wwwroot\uploads\%(RecursiveDir)" />
+	</Target>
+
+	<Target Name="CopyUploadsFolder" AfterTargets="Publish">
+		<ItemGroup>
+			<MyFolder Include="uploads\**\*.*" />
+		</ItemGroup>
+		<Copy
+		  SourceFiles="@(MyFolder)"
+		  DestinationFolder="$(PublishDir)uploads\%(RecursiveDir)"
+		  SkipUnchangedFiles="true" />
+	</Target>
 </Project>

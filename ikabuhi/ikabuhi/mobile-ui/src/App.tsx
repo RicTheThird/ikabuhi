@@ -22,6 +22,7 @@ import SSSelection from './components/social-services';
 import MicroInsuranceApplication from './components/micro-insurance';
 import LoanInsuranceApplication from './components/loan-insurance';
 import InsuranceSelection from './components/insurance-selection';
+import NotificationComponent from './components/notifications';
 
 const App: React.FC = () => {
   return (
@@ -46,6 +47,7 @@ const App: React.FC = () => {
         <Route path="/micro-insurance" element={<MicroInsuranceApplication />} />
         <Route path="/loan-insurance" element={<LoanInsuranceApplication />} />
         <Route path="/insurance" element={<InsuranceSelection />} />
+        <Route path="/notifications" element={<NotificationComponent />} />
       </Routes>
     </Router>
   );

@@ -33,6 +33,8 @@ export interface Member {
     brgy: string;
     municipality: string;
     province: string;
+    photoBlobName: string;
+    createdAt: string;
     group: Groups;
     memberLoans: MemberLoans[];
     memberSavings: MemberSavings[];

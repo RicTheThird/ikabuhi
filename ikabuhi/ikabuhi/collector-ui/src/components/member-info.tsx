@@ -13,11 +13,14 @@ import {
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import { useParams } from 'react-router-dom';
-import { Member } from '../services/interfaces';
-import { getMemberById } from '../services/apiService';
+import { Member, MemberLoans } from '../services/interfaces';
+import { getImageLink, getMemberById } from '../services/apiService';
+import { DAYS } from '../constants';
+import dayjs from 'dayjs';
 
 const MemberInformationCard = () => {
     const [member, setMember] = useState<Member>();
+    const [activeLoan, setActiveLoan] = useState<MemberLoans>();
     const theme = useTheme();
 
     const { memberId } = useParams();
@@ -30,7 +33,12 @@ const MemberInformationCard = () => {
     const getMemberDetails = async () => {
         const response: Member = await getMemberById(memberId ?? '');
         setMember(response);
+        setActiveLoan(response?.memberLoans?.find(f => f.status === 'Approved'));
     }
+
+    // const getDp = (): string => {
+
+    // }
 
 
     return (
@@ -39,7 +47,7 @@ const MemberInformationCard = () => {
                 <CardContent>
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12} sm={3} sx={{ textAlign: 'center' }}>
-                            <Avatar sx={{ width: 100, height: 100, margin: 'auto' }}>
+                            <Avatar sx={{ width: 100, height: 100, margin: 'auto' }} src={getImageLink(member?.photoBlobName ?? '')}>
                                 <PersonIcon sx={{ fontSize: 60 }} />
                             </Avatar>
                             <Typography variant="h6" sx={{ mt: 1 }}>
@@ -48,7 +56,7 @@ const MemberInformationCard = () => {
                         </Grid>
                         <Grid item xs={12} sm={9}>
                             <Typography variant="h6" gutterBottom>
-                                Member's Information
+                                <strong>Member's Information</strong>
                             </Typography>
                             <Typography>{member?.firstName} {member?.lastName}</Typography>
                             <Typography>{member?.civilStatus}</Typography>
@@ -58,45 +66,49 @@ const MemberInformationCard = () => {
                         </Grid>
                     </Grid>
                 </CardContent>
-            </Card>
-
-            <Card variant="outlined" sx={{ mb: 2 }}>
-                <CardContent>
-                    <Typography variant="subtitle1" gutterBottom>
-                        Meeting Time: <strong>Thursday/8:00am</strong>
-                    </Typography>
-                    <Typography>Minimum Weekly Savings/CBU: 50.00</Typography>
-                    <Typography>Date of Membership: Jan 12, 2011</Typography>
-                    <Typography>Branch: Tanauan</Typography>
-                    <Typography>Name of Collector: Ivan Dimayuga</Typography>
-                </CardContent>
-            </Card>
-
-            <Card variant="outlined" sx={{ mb: 2 }}>
-                <CardContent>
-                    <Typography variant="h6">Loan Information</Typography>
-                </CardContent>
-                <CardActions>
+                {/* <CardActions sx={{ textAlign: "center", width: "100%" }}>
                     <Button variant="contained" color="warning">
                         View
                     </Button>
-                </CardActions>
+                </CardActions> */}
+            </Card>
+
+            <Card variant="outlined" sx={{ mb: 2 }}>
+                <CardContent>
+                    <Typography variant="subtitle1">
+                        Group: <strong>{member?.group.name}</strong>
+                    </Typography>
+                    <Typography variant="subtitle1" gutterBottom>
+                        Meeting: <strong>{DAYS[member?.group?.meetingDay ?? 0]} : {member?.group?.meetingTime}</strong>
+                    </Typography>
+                    {/* <Typography>Minimum Weekly Savings/CBU: 50.00</Typography> */}
+                    <Typography>Date of Membership: {dayjs(member?.createdAt).format('YYYY-MM-DD')}</Typography>
+                    <Typography>Branch: Tanauan</Typography>
+                </CardContent>
+            </Card>
+
+            <Card variant="outlined" sx={{ mb: 2 }}>
+                <CardContent>
+                    <Typography variant="h6"><strong>Loan Information</strong></Typography>
+                    {activeLoan && <>
+                        <Typography>Loan Cycle: {activeLoan?.cycle}</Typography>
+                        <Typography>Loan Term: {activeLoan?.productLoan?.name}</Typography>
+                        <Typography>Loan Amount: {activeLoan?.totalLoanAmount?.toFixed(2) ?? 0}</Typography>
+                        <Typography>Loan Balance: {activeLoan?.loanBalance?.toFixed(2) ?? 0}</Typography>
+                    </>
+                    }
+                    {!activeLoan && <Typography>No active loan</Typography>}
+                </CardContent>
+
             </Card>
 
             <Card variant="outlined">
                 <CardContent>
-                    <Typography variant="h6">Guarantor's Information</Typography>
-                    <Typography>Loan Cycle of Borrower: 35th Cycle</Typography>
-                    <Typography>Name of Guarantor: Sheila Nicole Canobas</Typography>
-                    <Typography>Relation to Borrower: Daughter</Typography>
-                    <Typography>Contact No.: 09065800051</Typography>
-                    <Typography>Source of Income: Employed</Typography>
+                    <Typography variant="h6"><strong>Guarantor's Information</strong></Typography>
+                    <Typography>Name of Guarantor: {activeLoan?.guarantorName}</Typography>
+                    <Typography>Relation to Borrower: {activeLoan?.guarantorRelation}</Typography>
+                    <Typography>Source of Income: {activeLoan?.sourceOfIncome}</Typography>
                 </CardContent>
-                <CardActions>
-                    <Button variant="contained" color="warning">
-                        View
-                    </Button>
-                </CardActions>
             </Card>
         </Box>
     );

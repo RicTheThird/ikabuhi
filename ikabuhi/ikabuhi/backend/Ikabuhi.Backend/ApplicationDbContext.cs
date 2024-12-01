@@ -22,6 +22,7 @@ namespace Ikabuhi.Backend
         public DbSet<WashLoan> WashLoans { get; set; }
         public DbSet<BusinessLoan> BusinessLoans { get; set; }
         public DbSet<SocialService> SocialServices { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

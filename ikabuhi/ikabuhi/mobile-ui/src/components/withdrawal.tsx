@@ -61,6 +61,11 @@ const Withdrawal = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if(disableNonPaymentDates(formValues.withdrawalPaymentDate)) {
+      setAlert({ success: false, message: "Invalid next payment date given." })
+      return;
+    }
+
     const savings = myDetails?.memberSavings[0]?.runningSavingsAmount ?? 0;
 
     if (savings <= 0) {
@@ -208,12 +213,12 @@ const Withdrawal = () => {
             {myDetails?.municipality}
           </Typography>
         </Box>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+        {/* <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
           <Typography variant="body2">Last Principal Loan:</Typography>
           <Typography variant="body2" sx={{ fontWeight: "bold" }}>
             ₱{myDetails?.memberLoans.find((m: any) => m.isActive === true)?.totalLoanAmount.toFixed(2) ?? 0.00}
           </Typography>
-        </Box>
+        </Box> */}
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
           <Typography variant="body2">Savings Balance:</Typography>
           <Typography variant="body2" sx={{ fontWeight: "bold" }}>

@@ -7,8 +7,9 @@ import {
   Card,
   CardContent,
   Grid,
+  Avatar,
 } from "@mui/material";
-import { getAllGroupMembers, getGroupById, getGroupMembers, getMyGroups } from "../services/apiService";
+import { getAllGroupMembers, getGroupById, getGroupMembers, getImageLink, getMyGroups } from "../services/apiService";
 import { Groups, Member } from "../services/interfaces";
 
 
@@ -80,27 +81,15 @@ const MemberSavingsCreditScore = () => {
               <Card variant="outlined" sx={{ padding: 2 }}>
                 <CardContent>
                   <Box display="flex" alignItems="center" mb={2}>
-                    <Box
+                    <Avatar
+                      alt={`${item.firstName} ${item.lastName}`}
+                      src={getImageLink(item?.photoBlobName ?? '')} // Use default if no avatar URL is available
                       sx={{
-                        width: 64,
-                        height: 64,
-                        borderRadius: "50%",
-                        bgcolor: "#ff8c00",
-                        color: "#fff",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: "bold",
-                        fontSize: 24,
-                        marginBottom: 2,
-                        marginRight: '20px'
+                        width: 80,
+                        height: 80,
+                        margin: 'auto', // Center the avatar and add margin
                       }}
-                    >
-                      {(`${item.firstName} ${item.lastName}`)
-                        .split(" ")
-                        .map((n: string) => n[0])
-                        .join("")}
-                    </Box>
+                    />
                     <Box>
                       <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                         {item.firstName} {item.lastName}
@@ -119,7 +108,7 @@ const MemberSavingsCreditScore = () => {
                         Loan Amount
                       </Typography>
                       <Typography variant="body1">
-                      <strong>₱{item.memberLoans && item.memberLoans.length > 0 ? item.memberLoans[0].totalLoanAmount.toFixed(2) : 0.00}</strong>
+                        <strong>₱{item.memberLoans && item.memberLoans.length > 0 ? item.memberLoans[0].totalLoanAmount.toFixed(2) : 0.00}</strong>
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
@@ -133,7 +122,7 @@ const MemberSavingsCreditScore = () => {
                         <strong>₱{item.memberSavings && item.memberSavings.length > 0 ? item.memberSavings[0].runningSavingsAmount.toFixed(2) : 0.00}</strong>
                       </Typography>
                     </Grid>
-                    <Grid item xs={12}>
+                    {/* <Grid item xs={12}>
                       <Typography
                         variant="caption"
                         sx={{ fontWeight: "bold" }}
@@ -144,7 +133,7 @@ const MemberSavingsCreditScore = () => {
                       <Typography variant="body1">
                         <strong>₱{item.memberSavings && item.memberSavings.length > 0 ? (item.memberSavings[0].runningSavingsAmount * 0.8).toFixed(2) : 0.00}</strong>
                       </Typography>
-                    </Grid>
+                    </Grid> */}
                   </Grid>
                 </CardContent>
               </Card>

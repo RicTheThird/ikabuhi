@@ -29,6 +29,11 @@ export const putMemberWithdrawal = async (id: string, data: Withdrawal) => {
     const response = await axiosInstance.put(`/MemberWithdrawals/${id}`, data);
     return response;
 };
+
+export const getImageLink = (fileName: string): string => {
+    //return `https://localhost:7002/uploads/${fileName}`;
+    return `https://ikabuhi-api.azurewebsites.net/uploads/${fileName}`
+}
 //#endregion
 
 

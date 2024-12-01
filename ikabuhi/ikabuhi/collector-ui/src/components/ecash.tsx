@@ -61,7 +61,7 @@ const MemberECashPayment = () => {
           E-CASH PAYMENT
         </Typography>
       </Box>
-      <Box display="flex" justifyContent="space-between" mb={2}>
+      {/* <Box display="flex" justifyContent="space-between" mb={2}>
         <TextField label="Date" type="date" InputLabelProps={{ shrink: true }} variant="outlined" sx={{ width: '20%' }} />
         <TextField label="Week" variant="outlined" select sx={{ width: '20%' }}>
           <MenuItem value="Week 1">Week 1</MenuItem>
@@ -72,7 +72,7 @@ const MemberECashPayment = () => {
           <MenuItem value="PL-2">PL-2</MenuItem>
         </TextField>
         <Button variant="contained" color="primary" sx={{ height: '56px', width: '15%' }}>Submit</Button>
-      </Box>
+      </Box> */}
       <Grid container spacing={3}>
         {eCashPayments && eCashPayments.map((payment, index) => (
           <Grid item key={index} xs={12} md={3} lg={3}>

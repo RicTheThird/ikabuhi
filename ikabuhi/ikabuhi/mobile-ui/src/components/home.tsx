@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Grid, IconButton, Paper } from "@mui/material";
+import { Box, Typography, Grid, IconButton, Paper, Badge } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import ChatBubbleIcon from "@mui/icons-material/ChatBubble";
@@ -12,9 +12,9 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
 import { useNavigate } from "react-router-dom";
-import { getMyDetails } from "../services/apiService";
+import { getMyDetails, getNotifications } from "../services/apiService";
 import dayjs from "dayjs";
-import { Member } from "../services/interfaces";
+import { Member, NotificationX } from "../services/interfaces";
 import { ExitToApp } from "@mui/icons-material";
 import { logout } from "../services/authService";
 
@@ -22,10 +22,18 @@ const Home = () => {
   const navigate = useNavigate();
   const [myDetails, setMyDetails] = useState<Member>();
   const [recentTransaction, setRecentTransaction] = useState<any>(null);
+  const [notifications, setNotifications] = useState<NotificationX[]>([]);
 
   useEffect(() => {
     getMyDetailsAsync()
+    getNotifs()
   }, []);
+
+  const getNotifs = async () => {
+      const response = await getNotifications();
+      setNotifications(response ?? [])
+  }
+
 
   const getMyDetailsAsync = async () => {
     const response = await getMyDetails();
@@ -76,8 +84,14 @@ const Home = () => {
           <ArrowBackIcon sx={{ color: "#ff8c00" }} />
         </IconButton> */}
         <Box textAlign={"right"} sx={{ width: '100%' }}>
-          <IconButton>
-            <NotificationsIcon sx={{ color: "#002855" }} />
+          <IconButton onClick={() => navigate('/notifications')}>
+            <Badge
+              badgeContent={notifications.filter(f => !f.isSeen).length}
+              color="error" // You can change the color to primary, secondary, etc.
+              variant="dot" // Optional: Use a dot instead of a number (if unreadNotifications > 0)
+            >
+              <NotificationsIcon sx={{ color: "#002855" }} />
+            </Badge>
           </IconButton>
           <IconButton>
             <AccountCircleIcon sx={{ color: "#002855" }} />

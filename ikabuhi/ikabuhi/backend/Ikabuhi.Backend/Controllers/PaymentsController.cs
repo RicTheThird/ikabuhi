@@ -1,4 +1,5 @@
-﻿using Ikabuhi.Backend.Models;
+﻿using Ikabuhi.Backend.Extensions;
+using Ikabuhi.Backend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,7 +40,7 @@ namespace Ikabuhi.Backend.Controllers
         [HttpPost("group")]
         public async Task<ActionResult<IEnumerable<Payments>>> GetPaymentsByGroupDate(GetPaymentDto paymentDto)
         {
-            var payments = await _context.Payments.Where(p => p.PaymentDate == paymentDto.PaymentDate)
+            var payments = await _context.Payments.Where(p => p.PaymentDate == paymentDto.PaymentDate && p.Status != "Deleted")
                 .Include(p => p.MemberSavings)
                 .Include(p => p.Member)
                 .ThenInclude(m => m.MemberLoans)
@@ -104,11 +105,35 @@ namespace Ikabuhi.Backend.Controllers
 
                 var loan = await _context.MemberLoans.Where(l => l.Id == payment.LoanId).FirstOrDefaultAsync();
                 if (loan != null)
+                {
                     loan.LoanBalance -= payment?.LoanPayment ?? 0;
+                }
 
                 var savings = await _context.MemberSavings.Where(s => s.Id == payment.SavingsId).FirstOrDefaultAsync();
                 if (savings != null)
+                {
                     savings.RunningSavingsAmount += payment?.SavingsPayment ?? 0;
+                    if (loan.LoanBalance < 0)
+                    {
+                        savings.RunningSavingsAmount += (0 - (loan.LoanBalance));
+                        loan.LoanBalance = 0;
+                    }
+                }
+
+                if (loan != null && loan.LoanBalance <= 0 && loan.Status != "Paid")
+                {
+                    loan.Status = "Paid";
+                    var notif = new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        MemberId = loan.MemberId,
+                        Message = "Congratulations! You have PAID your loan. You are now eligible to apply for a new regular loan.",
+                        IsSeen = false,
+                        CreatedAt = DateTime.UtcNow.ToSEATimeFromUtc()
+                    };
+
+                    _context.Notifications.Add(notif);
+                }
 
                 try
                 {
