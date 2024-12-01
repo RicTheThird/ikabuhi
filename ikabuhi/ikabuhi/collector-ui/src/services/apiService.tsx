@@ -108,6 +108,34 @@ export const getCollectorsByGroup = async (groupId: string) => {
     const response = await axiosInstance.get(`/collectors/group/${groupId}`);
     return response.data;
 };
+
+export const registerCollector = async (form: any) => {
+    let formData = new FormData()
+    for (var key in form) {
+        if (key !== 'files') formData.append(key, form[key])
+        else {
+            form.files.forEach((file: File) => {
+                formData.append('files', file)
+            })
+        }
+    }
+    const response = await axiosInstance.post('/Collectors/register', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        }
+    });
+    return response;
+};
+
+export const getCollectorDetail = async () => {
+    const response = await axiosInstance.get(`/collectors/my`);
+    return response.data;
+};
+
+export const getAllCollectors = async () => {
+    const response = await axiosInstance.get(`/collectors`);
+    return response.data;
+};
 //#endregion
 
 //#region Payments
@@ -147,6 +175,21 @@ export const getPendingECashPayments = async () => {
     return response.data;
 };
 
+export const getWithdrawalReport = async (year: number) => {
+    const response = await axiosInstance.get(`/transactions/withdrawal-report/${year}`);
+    return response.data;
+};
+
+export const getSavingsReport = async (year: number) => {
+    const response = await axiosInstance.get(`/transactions/savings-report/${year}`);
+    return response.data;
+};
+
+export const getLoansReport = async (year: number) => {
+    const response = await axiosInstance.get(`/transactions/loan-report/${year}`);
+    return response.data;
+};
+
 export const getPendingLoanApplications = async () => {
     const response = await axiosInstance.get(`/MemberLoans/pendings`);
     return response.data;
@@ -168,6 +211,16 @@ export const downloadECashReceipt = async (transactionId: string) => {
         responseType: 'blob', // This is important to handle the file as a binary blob
     });
     return response;
+};
+
+export const getDashboardNumbers = async () => {
+    const response = await axiosInstance.get(`/Members/dashboard`);
+    return response.data;
+};
+
+export const getAllMembers = async () => {
+    const response = await axiosInstance.get(`/Members/all`);
+    return response.data;
 };
 
 //#endregion

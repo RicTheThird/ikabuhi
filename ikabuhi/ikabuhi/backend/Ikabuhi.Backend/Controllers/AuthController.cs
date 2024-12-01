@@ -64,7 +64,7 @@ namespace Ikabuhi.Backend.Controllers
                 Subject = new ClaimsIdentity(new Claim[]
                 {
                     new Claim(ClaimTypes.Email, user.UserName),
-                    new Claim(ClaimTypes.Role, "collector"),
+                    new Claim(ClaimTypes.Role, user.Role),
                     new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
                     new Claim(ClaimTypes.SerialNumber, user.Id.ToString())
                 }),
@@ -74,7 +74,7 @@ namespace Ikabuhi.Backend.Controllers
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
 
-            return Ok(new { Token = tokenString });
+            return Ok(new { Token = tokenString, Role = user.Role });
         }
 
         private bool VerifyPassword(string password, string storedHash)

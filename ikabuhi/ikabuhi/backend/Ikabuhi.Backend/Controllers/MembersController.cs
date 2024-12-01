@@ -39,6 +39,15 @@ namespace Ikabuhi.Backend.Controllers
         }
 
         // GET: api/Members/5
+        [HttpGet("all")]
+        public async Task<ActionResult<List<Member>>> GetAllMembers()
+        {
+            return await _context.Members.Where(m => m.IsActive)
+                .Include(m => m.MemberLoans).ThenInclude(m => m.ProductLoan)
+                .Include(m => m.Group).OrderBy(m => m.FirstName).ToListAsync();
+        }
+
+        // GET: api/Members/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Member>> GetMember(Guid id)
         {
@@ -52,6 +61,29 @@ namespace Ikabuhi.Backend.Controllers
                 .Include(m => m.Transactions.OrderByDescending(s => s.TransactionDate).Take(20))
                 .Include(m => m.Payments.Where(p => p.Status == "Submitted").OrderByDescending(p => p.PaymentDate))
                 .Include(m => m.MemberSavings.OrderByDescending(s => s.LastPaymentDate).Take(1)).FirstOrDefaultAsync();
+        }
+
+        [HttpGet("dashboard")]
+        public async Task<ActionResult<DashboardResponseDto>> GetDashboard()
+        {
+            var members = await _context.Members.Where(m => m.IsActive).ToListAsync();
+            var staffs = await _context.Collectors.Where(m => m.IsActive && m.Role == "collector").ToListAsync();
+            var groups = await _context.Groups.ToListAsync();
+            var withdrawals = _context.MemberWithdrawal.Where(w => w.Status == "Approved").Sum(w => w.WithdrawAmount);
+            var savings = _context.MemberSavings.Sum(s => s.RunningSavingsAmount);
+            var loans = _context.MemberLoans.Where(m => m.Status == "Paid" || m.Status == "Approved").Sum(m => m.LoanAmount);
+
+            var response = new DashboardResponseDto
+            {
+                Groups = groups.Count(),
+                Members = members.Count(),
+                Staffs = staffs.Count(),
+                Withdrawals = "₱" + withdrawals.ToString("N"),
+                Savings = "₱" + savings.ToString("N"),
+                Loans = "₱" + loans.ToString("N")
+            };
+
+            return response;
         }
 
         // GET: api/members/group/5
@@ -347,6 +379,16 @@ namespace Ikabuhi.Backend.Controllers
             public decimal? LiabilityLoanBalanceWeeklyPayments { get; set; }
             public decimal? ExternalSavingsBalance { get; set; }
             public decimal? MonthlyExpenses { get; set; }
+        }
+
+        public class DashboardResponseDto
+        {
+            public int Members { get; set; }
+            public int Groups { get; set; }
+            public int Staffs { get; set; }
+            public string Withdrawals { get; set; }
+            public string Savings { get; set; }
+            public string Loans { get; set; }
         }
     }
 }

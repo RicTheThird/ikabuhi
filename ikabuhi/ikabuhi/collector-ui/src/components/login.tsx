@@ -39,12 +39,13 @@ const Login: React.FC = () => {
       const response: any = await login({ userName: formValues.userName, password: formValues.password })
       if (response.status === 200) {
         setLoginError('')
-        navigate('/home');
+        navigate(response.data.role === 'collector' ? '/home' : '/home/dashboard');
       } else {
         setLoginError("Invalid User name or password")
       }
     } catch (error) {
       setLoginError("Invalid User name or password")
+      console.log(error)
     } finally {
       setLoading(false)
     }

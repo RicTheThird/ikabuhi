@@ -15,6 +15,8 @@ namespace Ikabuhi.Backend.Models
         public string? PasswordHash { get; set; }
         public DateTime? CreatedAt { get; set; }
         public bool IsActive { get; set; }
+        public string? Role { get; set; }
+        public string? ProfileImage { get; set; }
 
         [JsonIgnore]
         public ICollection<MemberLoan>? MemberLoans { get; set; }

@@ -19,6 +19,10 @@ export interface Collector {
     id: string;
     firstName: string;
     lastName: string;
+    role: string;
+    branch: string;
+    contactNo: string;
+    profileImage: string;
 }
 
 export interface Member {
@@ -40,6 +44,13 @@ export interface Member {
     memberSavings: MemberSavings[];
     payments: Payments[];
 
+}
+
+export interface ReportItem {
+    month: number;
+    monthName: string;
+    no: number;
+    amount: string;
 }
 
 export interface Payments {

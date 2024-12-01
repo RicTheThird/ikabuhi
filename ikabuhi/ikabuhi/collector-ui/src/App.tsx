@@ -15,6 +15,11 @@ import LoanApplication from './components/loan-application';
 import InsuranceApplication from './components/insurance-application';
 import SocialServicesApplication from './components/social-services';
 import MemberInformationCard from './components/member-info';
+import DashboardComponent from './components/dashboard';
+import AllMembersList from './components/all-members';
+import NewStaffForm from './components/new-staff';
+import ReportComponent from './components/reports';
+import AllStaffsList from './components/all-staffs';
 
 const App: React.FC = () => {
   return (
@@ -28,13 +33,18 @@ const App: React.FC = () => {
           <Route path="registration/:groupId" element={<MemberRegistration />} />
           <Route path="transactions/:groupId" element={<MemberTransactions />} />
           <Route path="transactions-report" element={<MemberTransactionsReport />} />
-          <Route path="ecash" element={<MemberECashPayment />} />
+          <Route path="ecash" element={<MemberECashPayment />} /> 
           <Route path="savings-credit" element={<MemberSavingsCreditScore />} />
           <Route path="withdrawal-application" element={<WithdrawalApplication />} />
           <Route path="loan-application" element={<LoanApplication />} />
           <Route path="insurance-application" element={<InsuranceApplication />} />
           <Route path="social-services-application" element={<SocialServicesApplication />} />
           <Route path="member-info/:memberId" element={<MemberInformationCard />} />
+          <Route path="dashboard" element={<DashboardComponent />} />
+          <Route path="all-members" element={<AllMembersList />} />
+          <Route path="all-staff" element={<AllStaffsList />} />
+          <Route path="add-staff" element={<NewStaffForm />} />
+          <Route path="reports" element={<ReportComponent />} />
         </Route>
       </Routes>
     </Router>

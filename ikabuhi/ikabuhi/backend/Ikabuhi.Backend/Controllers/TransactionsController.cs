@@ -85,6 +85,61 @@ namespace Ikabuhi.Backend.Controllers
             return transaction;
         }
 
+        // GET: api/Transactions/5
+        [HttpGet("withdrawal-report/{year}")]
+        public async Task<ActionResult<List<ReportItem>>> GetWithdrawalReport(int year)
+        {
+            var report = await _context.MemberWithdrawal
+            .Where(w => w.Status == "Approved" && w.WithdrawalDateTime.Year == year)
+            .GroupBy(w => w.WithdrawalDateTime.Month)
+            .Select(g => new ReportItem
+            {
+                Month = g.Key,
+                MonthName = GetMonthName(g.Key),
+                No = g.Count(),
+                Amount = g.Sum(w => w.WithdrawAmount).ToString("N2")
+            }).OrderBy(n => n.Month)
+            .ToListAsync();
+
+            return report;
+        }
+
+        [HttpGet("savings-report/{year}")]
+        public async Task<ActionResult<List<ReportItem>>> GetSavingsReport(int year)
+        {
+            var report = await _context.MemberSavings
+            .Where(w => w.LastPaymentDate.Year == year)
+            .GroupBy(w => w.LastPaymentDate.Month)
+            .Select(g => new ReportItem
+            {
+                Month = g.Key,
+                No = g.Count(),
+                MonthName = GetMonthName(g.Key),
+                Amount = g.Sum(w => w.RunningSavingsAmount).ToString("N2")
+            }).OrderBy(n => n.Month)
+            .ToListAsync();
+
+            return report;
+        }
+
+        [HttpGet("loan-report/{year}")]
+        public async Task<ActionResult<List<ReportItem>>> GetLoansReport(int year)
+        {
+            var report = await _context.MemberLoans
+            .Where(w => w.FirstPaymentDate != null && w.FirstPaymentDate.Value.Year == year && (w.Status == "Paid" || w.Status == "Approved"))
+            .GroupBy(w => w.FirstPaymentDate.Value.Month)
+            .Select(g => new ReportItem
+            {
+                Month = g.Key,
+                MonthName = GetMonthName(g.Key),
+                No = g.Count(),
+                Amount = g.Sum(w => w.LoanAmount).ToString("N2")
+            }).OrderBy(n => n.Month)
+            .ToListAsync();
+
+            return report;
+        }
+
         // PUT: api/Transactions/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
@@ -207,6 +262,19 @@ namespace Ikabuhi.Backend.Controllers
         {
             return _context.Transactions.Any(e => e.Id == id);
         }
+
+        private static string GetMonthName(int monthNumber)
+        {
+            // Ensure the monthNumber is between 1 and 12
+            if (monthNumber < 1 || monthNumber > 12)
+            {
+                throw new ArgumentOutOfRangeException(nameof(monthNumber), "Month number must be between 1 and 12.");
+            }
+
+            // Use DateTime to get the month name
+            DateTime date = new DateTime(2024, monthNumber, 1); // Year is arbitrary, monthNumber is what matters
+            return date.ToString("MMMM");  // Returns the full month name
+        }
     }
 
     public class PaymentDto
@@ -220,5 +288,13 @@ namespace Ikabuhi.Backend.Controllers
     public class ECashRequestDto
     {
         public DateTime PaymentDate { get; set; }
+    }
+
+    public class ReportItem
+    {
+        public int Month { get; set; }
+        public string MonthName { get; set; }
+        public int No { get; set; }
+        public string Amount { get; set; }
     }
 }

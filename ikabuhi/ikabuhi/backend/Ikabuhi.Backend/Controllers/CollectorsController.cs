@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using Ikabuhi.Backend.Extensions;
+using Ikabuhi.Backend.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Ikabuhi.Backend;
-using Ikabuhi.Backend.Models;
-using Ikabuhi.Backend.Extensions;
-using Microsoft.AspNetCore.Authorization;
 
 namespace Ikabuhi.Backend.Controllers
 {
@@ -27,14 +21,15 @@ namespace Ikabuhi.Backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Collector>>> GetCollectors()
         {
-            return await _context.Collectors.ToListAsync();
+            return await _context.Collectors.Where(c => c.IsActive).ToListAsync();
         }
 
         [Authorize]
         [HttpGet("my")]
-        public async Task<ActionResult<IEnumerable<Collector>>> GetMyCollectors()
+        public async Task<ActionResult<Collector>> GetMyCollectors()
         {
-            return await _context.Collectors.Where(c => c.Id == GetUserId()).Include(c => c.CollectorGroups).ToListAsync();
+            return await _context.Collectors.Where(c => c.Id == GetUserId())
+                .Include(c => c.CollectorGroups).FirstOrDefaultAsync();
         }
 
         // GET: api/Collectors/5
@@ -101,10 +96,10 @@ namespace Ikabuhi.Backend.Controllers
             return NoContent();
         }
 
-        // POST: api/Collectors
+        // POST: api/Collectors/register
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost("register")]
-        public async Task<ActionResult<Collector>> PostCollector(CollectorDto collectorDto)
+        public async Task<ActionResult<Collector>> PostCollector([FromForm] CollectorDto collectorDto)
         {
             if (collectorDto == null) return BadRequest();
 
@@ -124,27 +119,34 @@ namespace Ikabuhi.Backend.Controllers
                 Branch = collectorDto.Branch,
                 PasswordHash = collectorDto.PasswordRaw.Hash(),
                 CreatedAt = DateTime.UtcNow.ToSEATimeFromUtc(),
-                IsActive = true
+                IsActive = true,
+                Role = collectorDto.Role,
+                ProfileImage = collectorDto.ProfileImage != null ? $"{collectorId}-{collectorDto.ProfileImage.FileName}" : null,
             };
 
             await _context.Collectors.AddAsync(collector);
 
-            var collectorGroups = new List<CollectorGroup>();
+            if (collectorDto.ProfileImage != null)
+                await UploadFile(collectorDto.ProfileImage, collectorId.ToString());
 
-            foreach (var groupId in collectorDto.GroupIds)
+            if (collectorDto.GroupIds != null && collectorDto.GroupIds.Any())
             {
-                var group = new CollectorGroup
+                var collectorGroups = new List<CollectorGroup>();
+                foreach (var groupId in collectorDto.GroupIds)
                 {
-                    Id = Guid.NewGuid(),
-                    CollectorId = collectorId,
-                    GroupId = groupId,
-                    IsActive = true,
-                };
+                    var group = new CollectorGroup
+                    {
+                        Id = Guid.NewGuid(),
+                        CollectorId = collectorId,
+                        GroupId = groupId,
+                        IsActive = true,
+                    };
 
-                collectorGroups.Add(group);
+                    collectorGroups.Add(group);
+                }
+                await _context.CollectorGroups.AddRangeAsync(collectorGroups);
             }
 
-            await _context.CollectorGroups.AddRangeAsync(collectorGroups);
             await _context.SaveChangesAsync();
             return Ok(collector);
         }
@@ -169,6 +171,26 @@ namespace Ikabuhi.Backend.Controllers
         {
             return _context.Collectors.Any(e => e.Id == id);
         }
+
+        private async Task UploadFile(IFormFile? file, string memberId)
+        {
+            if (file != null)
+            {
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", $"{memberId}-{file.FileName}");
+
+                // Create directory if it doesn't exist
+                var directoryPath = Path.GetDirectoryName(filePath);
+                if (!Directory.Exists(directoryPath))
+                {
+                    Directory.CreateDirectory(directoryPath);
+                }
+                // Save the file
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+            }
+        }
     }
 
     public class CollectorDto
@@ -181,6 +203,8 @@ namespace Ikabuhi.Backend.Controllers
         public string Branch { get; set; } = "Tanauan";
         public string UserName { get; set; }
         public string PasswordRaw { get; set; }
-        public List<Guid> GroupIds { get; set; }
+        public string Role { get; set; }
+        public List<Guid>? GroupIds { get; set; }
+        public IFormFile? ProfileImage { get; set; }
     }
 }

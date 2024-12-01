@@ -42,6 +42,8 @@ export const login = async (data: any) => {
         // Save the token to localStorage or sessionStorage
         localStorage.setItem('authToken', response.data.token);
         localStorage.removeItem('sessiontimeout');
+       // const decoded = decodeJwt<UserProfile>(response.data.token || '').decodedToken;
+        localStorage.setItem('role', response.data.role || '')
     }
     return response;
 };

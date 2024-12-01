@@ -13,16 +13,16 @@ import {
 import PeopleIcon from "@mui/icons-material/People";
 import SavingsIcon from "@mui/icons-material/Savings";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import ChatIcon from "@mui/icons-material/Chat";
-import PersonIcon from "@mui/icons-material/Person";
-
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import BusinessIcon from '@mui/icons-material/Business';
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { logout } from "../services/authService";
-import { PendingLoanResponse, SocialService, Withdrawal } from "../services/interfaces";
-import { getMemberWithdrawal, getPendingLoanApplications, getPendingSocialServices } from "../services/apiService";
+import { Collector, PendingLoanResponse, SocialService, Withdrawal } from "../services/interfaces";
+import { getCollectorDetail, getMemberWithdrawal, getPendingLoanApplications, getPendingSocialServices } from "../services/apiService";
 import { ExitToApp } from "@mui/icons-material";
+import dayjs from "dayjs";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -31,15 +31,24 @@ const HomePage: React.FC = () => {
   const [pendingLoans, setPendingLoans] = useState<PendingLoanResponse>();
   const [pendingSocialServices, setPendingSocialServices] = useState<SocialService[]>();
   const [pendingWithdrawal, setPendingWithdrawal] = useState<Withdrawal[]>();
+  const [userDetails, setUserDetails] = useState<Collector>();
+
+
   const handleMenuClick = (event: any) => {
     setAnchorEl(event.currentTarget);
   };
 
   useEffect(() => {
+    getUserDetails();
     getPendingLoans()
     getPendingSS()
     getWithdrawalApplications()
   }, []);
+
+  const getUserDetails = async () => {
+    const response = await getCollectorDetail();
+    setUserDetails(response);
+  }
 
   const getPendingLoans = async () => {
     const response: PendingLoanResponse = await getPendingLoanApplications();
@@ -63,12 +72,24 @@ const HomePage: React.FC = () => {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+
+  const getTimeOfDay = (): string => {
+    const currentHr = dayjs().hour();
+    if (currentHr >= 4 && currentHr < 12)
+      return "morning"
+    else if (currentHr >= 12 && currentHr < 17)
+      return "afternoon"
+    else
+      return "evening"
+  }
+
   return (
     <Box>
       <AppBar position="static" sx={{ backgroundColor: "#f1f1f1" }}>
         <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
           {/* Logo */}
           <Box display="flex" alignItems="center">
+
             <Box
               component="img"
               src="/header-logo.png"
@@ -80,13 +101,10 @@ const HomePage: React.FC = () => {
           {/* Navigation Links */}
 
           {/* Notification and Profile Icons */}
-          <Box>
-            {/* <IconButton color="primary">
-              <NotificationsIcon sx={{ color: "#ff6600", fontSize: "40px" }} />
-            </IconButton>
-            <IconButton color="primary">
-              <ChatIcon sx={{ color: "#ff6600", fontSize: "40px" }} />
-            </IconButton> */}
+          <Box sx={{ display: "flex" }}>
+            <Typography variant="h5" sx={{ color: "#0c1e52", mt: 2, mr: 2 }}>
+              Good {getTimeOfDay()}, <strong>{userDetails?.firstName} {userDetails?.lastName}</strong>
+            </Typography>
             <IconButton color="primary" onClick={() => logout()}>
               <ExitToApp sx={{ color: "#ff6600", fontSize: "40px" }} />
             </IconButton>
@@ -116,7 +134,64 @@ const HomePage: React.FC = () => {
         alignItems="center"
         sx={{ padding: "24px" }}
       >
-        <Link
+        {localStorage.getItem('role') === 'admin' && <Link
+          to="/home/dashboard"
+          style={{
+            textDecoration: "none",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            marginRight: 16,
+          }}
+        >
+          <DashboardIcon sx={{ color: "#ff6600", mr: 0.5, fontSize: "30px" }} />
+          <Typography variant="h6">Dashboard</Typography>
+        </Link>
+        }
+
+        {localStorage.getItem('role') === 'admin' && <Link
+          to="/home/all-members"
+          style={{
+            textDecoration: "none",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            marginRight: 16,
+          }}
+        >
+          <PeopleIcon sx={{ color: "#ff6600", mr: 0.5, fontSize: "30px" }} />
+          <Typography variant="h6">Members</Typography>
+        </Link>}
+
+        {localStorage.getItem('role') === 'admin' && <Link
+          to="/home/all-staff"
+          style={{
+            textDecoration: "none",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            marginRight: 16,
+          }}
+        >
+          <BusinessIcon sx={{ color: "#ff6600", mr: 0.5, fontSize: "30px" }} />
+          <Typography variant="h6">Staffs</Typography>
+        </Link>}
+
+        {localStorage.getItem('role') === 'admin' && <Link
+          to="/home/reports"
+          style={{
+            textDecoration: "none",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            marginRight: 16,
+          }}
+        >
+          <AssessmentIcon sx={{ color: "#ff6600", mr: 0.5, fontSize: "30px" }} />
+          <Typography variant="h6">Reports</Typography>
+        </Link>}
+
+        {localStorage.getItem('role') === 'collector' && <Link
           to="/home/groups"
           style={{
             textDecoration: "none",
@@ -128,23 +203,9 @@ const HomePage: React.FC = () => {
         >
           <PeopleIcon sx={{ color: "#ff6600", mr: 0.5, fontSize: "30px" }} />
           <Typography variant="h6">Member Groups</Typography>
-        </Link>
-        {/* <Link
-          to="/transactions"
-          style={{
-            textDecoration: "none",
-            color: "white",
-            display: "flex",
-            alignItems: "center",
-            marginRight: 16,
-          }}
-        >
-          <AccountBalanceWalletIcon
-            sx={{ color: "#ff6600", mr: 0.5, fontSize: "30px" }}
-          />
-          <Typography variant="h6">Members Transaction</Typography>
-        </Link> */}
-        <Link
+        </Link>}
+
+        {localStorage.getItem('role') === 'collector' && <Link
           to="/home/savings-credit"
           style={{
             textDecoration: "none",
@@ -158,8 +219,9 @@ const HomePage: React.FC = () => {
           <Typography variant="h6">
             Members Savings &amp; Credit Score
           </Typography>
-        </Link>
-        <Link
+        </Link>}
+
+        {localStorage.getItem('role') === 'collector' && <Link
           to="/home/withdrawal-application"
           style={{
             textDecoration: "none",
@@ -188,7 +250,8 @@ const HomePage: React.FC = () => {
             />
           </Typography>
         </Link>
-        <Box>
+        }
+        {localStorage.getItem('role') === 'collector' && <Box>
           <Link
             to="#"
             style={{
@@ -258,7 +321,7 @@ const HomePage: React.FC = () => {
               />
             </MenuItem>
           </Menu>
-        </Box>
+        </Box>}
       </Box>
       <Box id="box-container">
         <Outlet /> {/* Renders child components based on route */}
